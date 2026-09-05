@@ -11,6 +11,7 @@ import sqlite3
 import os
 import urllib.parse
 import urllib.request
+import ssl
 from datetime import datetime
 
 PORT = int(os.environ.get("PORT", 3000))
@@ -198,7 +199,14 @@ def sync_to_google_sheet(action_type, payload):
             data=json.dumps(data).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=15) as response:
+        ctx = ssl.create_default_context()
+        try:
+            import certifi
+            ctx.load_verify_locations(certifi.where())
+        except Exception:
+            ctx = ssl._create_unverified_context()
+
+        with urllib.request.urlopen(req, context=ctx, timeout=15) as response:
             res_text = response.read().decode("utf-8")
             return True, res_text
     except Exception as e:
