@@ -1,0 +1,2 @@
+# Standard library dependencies only (no external pip dependencies needed)
+# Python >= 3.9

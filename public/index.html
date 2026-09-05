@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sharda Gurukul Attendance System</title>
+  <meta name="description" content="Sharda Gurukul Attendance System - Attendance management and automated WhatsApp notifications for Sainik School, RMS, and RIMC batches.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rozha+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Fullscreen Entry Gate Lock Screen (Teacher Login Form) -->
+  <div id="entryLockScreen" class="entry-lock-overlay">
+    <div class="entry-lock-card" id="entryLockCard">
+      <div class="lock-brand">
+        <div class="lock-emblem">🏫</div>
+        <h2 class="lock-school-title">SHARDA GURUKUL ATTENDANCE SYSTEM</h2>
+        <p class="lock-school-subtitle">Sainik School • RMS • RIMC — Classes 4th to 8th</p>
+        <div style="margin-top: 8px;">
+          <a href="https://shardagurukul.in" target="_blank" rel="noopener" class="lock-portal-link">
+            🌐 Official Website: ShardaGurukul.in ↗️
+          </a>
+        </div>
+      </div>
+
+      <div class="lock-header">
+        <div class="lock-icon-badge">🔐</div>
+        <h3 class="lock-form-title">Teacher & Staff Attendance Login</h3>
+        <p class="lock-form-subtitle">कृपया रोल-कॉल उपस्थिति के लिए 4-अंकों का Login PIN दर्ज करें</p>
+      </div>
+
+      <div id="entryPinAlert" class="entry-pin-alert hidden">
+        <span class="alert-icon">⚠️</span>
+        <span id="entryPinAlertMsg">गलत PIN! कृपया सही PIN डालें।</span>
+      </div>
+
+      <form id="entryPinForm" autocomplete="off">
+        <div class="pin-input-wrap">
+          <input type="password" id="entryPinInput" maxlength="4" pattern="\d{4}" inputmode="numeric" placeholder="••••" autofocus required>
+          <div class="pin-dots-display" id="pinDotsDisplay">
+            <span class="pin-dot"></span>
+            <span class="pin-dot"></span>
+            <span class="pin-dot"></span>
+            <span class="pin-dot"></span>
+          </div>
+        </div>
+
+        <!-- Touch Number Pad for Phone & Tablet users -->
+        <div class="entry-numpad" id="entryNumpad">
+          <button type="button" class="numpad-key" data-key="1">1</button>
+          <button type="button" class="numpad-key" data-key="2">2</button>
+          <button type="button" class="numpad-key" data-key="3">3</button>
+          <button type="button" class="numpad-key" data-key="4">4</button>
+          <button type="button" class="numpad-key" data-key="5">5</button>
+          <button type="button" class="numpad-key" data-key="6">6</button>
+          <button type="button" class="numpad-key" data-key="7">7</button>
+          <button type="button" class="numpad-key" data-key="8">8</button>
+          <button type="button" class="numpad-key" data-key="9">9</button>
+          <button type="button" class="numpad-key numpad-action" data-key="clear" title="Clear">C</button>
+          <button type="button" class="numpad-key" data-key="0">0</button>
+          <button type="button" class="numpad-key numpad-action" data-key="backspace" title="Backspace">⌫</button>
+        </div>
+
+        <button type="submit" class="btn-unlock-portal" id="entryUnlockBtn">
+          <span>🚀</span> Unlock Attendance System
+        </button>
+      </form>
+
+      <div class="lock-footer">
+        <div class="default-pin-hint">
+          <span>💡 Default Teacher PIN: <strong>1234</strong></span>
+        </div>
+        <div class="admin-direct-link">
+          <button type="button" id="entryAdminDirectBtn" class="btn-link-admin">
+            👑 Chairperson / Admin Direct Login
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Navbar / Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <span class="logo-emblem">🏫</span>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">SHARDA GURUKUL ATTENDANCE SYSTEM</h1>
+          <p class="brand-subtitle">Sainik School • RMS • RIMC — Classes 4th to 8th</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- ShardaGurukul.in Official Website Button -->
+        <a href="https://shardagurukul.in" target="_blank" rel="noopener" class="btn-shardagurukul" title="Visit Official Sharda Gurukul Website">
+          <span class="sharda-globe">🌐</span>
+          <span class="sharda-text">Shardagurukul.in</span>
+        </a>
+        <!-- Live Clock & Date -->
+        <div class="live-clock-badge">
+          <span id="currentDateDisplay">--</span>
+          <span class="clock-divider">|</span>
+          <span id="currentTimeDisplay" class="time-bold">--:--</span>
+        </div>
+
+        <!-- Window Status Badge -->
+        <div id="windowStatusBadge" class="window-badge active">
+          <span class="pulse-dot"></span>
+          <span id="windowStatusText">8:00 - 10:00 AM Active</span>
+        </div>
+
+        <!-- Active Role Badge -->
+        <div id="activeRoleBadge" class="role-badge role-teacher">
+          <span id="roleBadgeIcon">👨‍🏫</span>
+          <span id="roleBadgeText">Teacher Mode</span>
+        </div>
+
+        <!-- Sheet Sync Indicator (Admin Feature) -->
+        <button id="quickSyncBtn" class="btn-sheet-sync admin-feature-el" title="Sync with Google Sheet">
+          <span class="sync-icon">🔄</span>
+          <span class="sync-text">Sheet Sync</span>
+        </button>
+
+        <!-- Switch to Teacher View (Shown when in Admin Mode) -->
+        <button id="switchToTeacherBtn" class="btn-switch-teacher hidden" title="Return to simple Teacher roll call view">
+          <span>↩️</span> Teacher View
+        </button>
+
+        <!-- Admin / Teacher Mode Toggle Button -->
+        <button id="adminModeBtn" class="btn-admin-gate" title="Open Chairperson Admin Controls">
+          <span class="admin-icon">🔒</span>
+          <span id="adminBtnText">Admin Control</span>
+        </button>
+
+        <!-- Lock Portal Button -->
+        <button id="lockPortalBtn" class="btn-lock-portal" title="Lock Portal back to PIN screen">
+          <span>🚪</span> Lock
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-container">
+        <button class="nav-tab active" data-tab="tab-students">
+          <span class="tab-icon">📋</span>
+          <span class="tab-text">Student Attendance</span>
+          <span id="studentCountBadge" class="counter-pill">0</span>
+        </button>
+        <button class="nav-tab admin-feature-tab" data-tab="tab-teachers" id="teacherAttendanceTabNav">
+          <span class="tab-icon">👨‍🏫</span>
+          <span class="tab-text">Teacher Attendance</span>
+          <span id="teacherCountBadge" class="counter-pill">0</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-alerts" id="whatsappAlertsTabNav">
+          <span class="tab-icon">📢</span>
+          <span class="tab-text">WhatsApp Alerts</span>
+          <span id="alertCountBadge" class="counter-pill alert-pill">0</span>
+        </button>
+        <button class="nav-tab admin-feature-tab" data-tab="tab-reports" id="reportsTabNav">
+          <span class="tab-icon">📊</span>
+          <span class="tab-text">Reports & Stats</span>
+        </button>
+        <button class="nav-tab admin-feature-tab admin-only-tab" data-tab="tab-admin" id="adminTabNav">
+          <span class="tab-icon">⚙️</span>
+          <span class="tab-text">Admin Control</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="app-main">
+
+    <!-- Alert Window Banner (if attendance window is closed and not admin) -->
+    <div id="windowClosedNotice" class="banner-notice hidden">
+      <div class="banner-icon">⏰</div>
+      <div class="banner-content">
+        <h4>Attendance Window Closed</h4>
+        <p>Regular teacher attendance is scheduled between <b id="bannerWindowTime">8:00 AM – 10:00 AM</b>. Admin can take attendance or modify window settings at any time.</p>
+      </div>
+      <button id="bannerAdminLoginBtn" class="btn btn-sm btn-primary">Login as Admin</button>
+    </div>
+
+    <!-- TAB 1: STUDENT ATTENDANCE CHECKLIST -->
+    <section id="tab-students" class="tab-section active">
+      <!-- Filter and Action Bar -->
+      <div class="controls-card">
+        <div class="controls-row">
+          <!-- Date Picker -->
+          <div class="form-group-inline">
+            <label for="attendanceDateInput">दिनांक (Date):</label>
+            <input type="date" id="attendanceDateInput" class="input-date">
+          </div>
+
+          <!-- Class Filter -->
+          <div class="filter-group">
+            <label>कक्षा (Class):</label>
+            <div class="pill-selector" id="classFilterGroup">
+              <button class="pill-btn active" data-class="all">All</button>
+              <button class="pill-btn" data-class="4th">4th</button>
+              <button class="pill-btn" data-class="5th">5th</button>
+              <button class="pill-btn" data-class="6th">6th</button>
+              <button class="pill-btn" data-class="7th">7th</button>
+              <button class="pill-btn" data-class="8th">8th</button>
+            </div>
+          </div>
+
+          <!-- Batch Filter -->
+          <div class="filter-group">
+            <label>बैच (Batch):</label>
+            <div class="pill-selector" id="batchFilterGroup">
+              <button class="pill-btn active" data-batch="all">All Batches</button>
+              <button class="pill-btn" data-batch="Sainik School">🪖 Sainik School</button>
+              <button class="pill-btn" data-batch="RMS">🎖️ RMS</button>
+              <button class="pill-btn" data-batch="RIMC">⚔️ RIMC</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls-actions-row">
+          <!-- Search Box -->
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="studentSearchInput" placeholder="विद्यार्थी का नाम या रोल नंबर खोजें...">
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-buttons">
+            <button id="markAllPresentBtn" class="btn btn-emerald">
+              <span>✅ Mark All Present</span>
+            </button>
+            <button id="openAlertsDrawerBtn" class="btn btn-ruby">
+              <span>📢 WhatsApp Alerts (<span id="quickAlertCount">0</span>)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Summary Bar -->
+      <div class="summary-metrics-bar">
+        <div class="metric-chip metric-total">
+          <span class="chip-label">कुल विद्यार्थी:</span>
+          <span class="chip-val" id="metricTotalStudents">0</span>
+        </div>
+        <div class="metric-chip metric-present">
+          <span class="chip-label">उपस्थित (Present):</span>
+          <span class="chip-val" id="metricPresentStudents">0</span>
+        </div>
+        <div class="metric-chip metric-absent">
+          <span class="chip-label">अनुपस्थित (Absent):</span>
+          <span class="chip-val" id="metricAbsentStudents">0</span>
+        </div>
+        <div class="metric-chip metric-late">
+          <span class="chip-label">देर से (Late):</span>
+          <span class="chip-val" id="metricLateStudents">0</span>
+        </div>
+      </div>
+
+      <!-- Batch Completion Gate & Google Sheet Storage Bar -->
+      <div id="batchSubmissionBar" class="batch-submission-card">
+        <div class="batch-info-col">
+          <div class="batch-title-row">
+            <span class="batch-indicator-icon">📋</span>
+            <span id="activeBatchTitle" class="batch-title-txt">Class 6th • Sainik School</span>
+            <span id="batchStatusBadge" class="batch-status-badge in-progress">In Progress (0/0)</span>
+          </div>
+          <p id="batchSubtitleTxt" class="batch-sub-txt">
+            Google Sheets में डेटा स्टोर करने के लिए इस ग्रुप के सभी बच्चों का Present/Absent/Late लगाना अनिवार्य है।
+          </p>
+        </div>
+
+        <div class="batch-action-col">
+          <!-- Submit Button: Disabled until 100% of students in this batch are marked -->
+          <button id="submitBatchToSheetBtn" class="btn-submit-sheet disabled" disabled>
+            <span class="btn-icon">💾</span>
+            <span id="submitBtnText">Store to Google Sheet (0/0 Marked)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Batch Locked Notice (Shown when already submitted today) -->
+      <div id="batchLockedNotice" class="batch-locked-banner hidden">
+        <div class="locked-icon">🔒</div>
+        <div class="locked-info">
+          <h4>इस क्लास और ग्रुप की आज की हाजिरी Google Sheets में सबमिट हो चुकी है</h4>
+          <p id="batchLockedDetails">आज दिनांक के लिए यह रिकॉर्ड सुरक्षित और लॉक कर दिया गया है। दिन में केवल एक बार ही सबमिट किया जा सकता है।</p>
+        </div>
+        <button id="adminUnlockBatchBtn" class="btn-unlock-batch hidden" title="Chairperson can unlock if needed">
+          <span>🔓 Unlock (Admin)</span>
+        </button>
+      </div>
+
+      <!-- Attendance Checklist Grid -->
+      <div class="checklist-container">
+        <div id="studentChecklistGrid" class="checklist-grid">
+          <!-- Student cards rendered dynamically -->
+        </div>
+        <div id="noStudentsFound" class="empty-state hidden">
+          <div class="empty-icon">📂</div>
+          <h3>कोई विद्यार्थी नहीं मिला</h3>
+          <p>कृपया फ़िल्टर बदलें या Admin Panel से नए विद्यार्थी जोड़ें।</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: TEACHER ATTENDANCE -->
+    <section id="tab-teachers" class="tab-section hidden">
+      <div class="controls-card">
+        <div class="controls-row">
+          <div class="form-group-inline">
+            <label for="teacherDateInput">दिनांक (Date):</label>
+            <input type="date" id="teacherDateInput" class="input-date">
+          </div>
+          <div class="quick-buttons">
+            <button id="addTeacherQuickBtn" class="btn btn-outline admin-only">
+              <span>➕ Add Teacher</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teachers Grid -->
+      <div class="checklist-container">
+        <div id="teacherChecklistGrid" class="checklist-grid teachers-grid">
+          <!-- Teacher cards rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: WHATSAPP ALERTS QUEUE -->
+    <section id="tab-alerts" class="tab-section hidden">
+      <div class="section-hero-card">
+        <div class="hero-text">
+          <h2>📢 Daily WhatsApp Notification Queue</h2>
+          <p>आज जिन विद्यार्थियों को <b>Absent (अनुपस्थित)</b> या <b>Late (देर से)</b> मार्क किया गया है, उनके माता-पिता को WhatsApp अलर्ट भेजने के लिए यहाँ तैयार हैं।</p>
+          <p class="helpline-note">प्रत्येक मैसेज में डायरेक्ट हेल्पलाइन नंबर <b>9817350860</b> शामिल रहेगा।</p>
+        </div>
+        <div class="hero-actions">
+          <button id="sendAllWhatsAppBtn" class="btn btn-whatsapp-primary">
+            <span>🚀 Send First Pending WhatsApp</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="alerts-list-wrapper">
+        <div id="alertsListContainer" class="alerts-list">
+          <!-- Alert cards rendered dynamically -->
+        </div>
+        <div id="noAlertsFound" class="empty-state hidden">
+          <div class="empty-icon">🎉</div>
+          <h3>कोई अनुपस्थित या लेट विद्यार्थी नहीं है!</h3>
+          <p>आज सभी बच्चे उपस्थित हैं या अभी अटेंडेंस दर्ज नहीं हुई है।</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: REPORTS & STATS -->
+    <section id="tab-reports" class="tab-section hidden">
+      <div class="controls-card">
+        <div class="controls-row">
+          <div class="form-group-inline">
+            <label for="reportDateInput">तारीख चुनें (Select Date):</label>
+            <input type="date" id="reportDateInput" class="input-date">
+          </div>
+          <div class="quick-buttons">
+            <button id="downloadCsvBtn" class="btn btn-outline">
+              <span>📥 Export CSV / Excel</span>
+            </button>
+            <button id="printReportBtn" class="btn btn-outline">
+              <span>🖨️ Print Sheet</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="reports-dashboard">
+        <div class="report-stats-grid">
+          <div class="stat-card">
+            <h4>Total Attendance Rate</h4>
+            <div class="stat-big-val" id="reportRate">0%</div>
+            <p>Overall Present Ratio</p>
+          </div>
+          <div class="stat-card stat-card-green">
+            <h4>Present Students</h4>
+            <div class="stat-big-val" id="reportPresentCount">0</div>
+            <p>On time in class</p>
+          </div>
+          <div class="stat-card stat-card-red">
+            <h4>Absent Students</h4>
+            <div class="stat-big-val" id="reportAbsentCount">0</div>
+            <p>Parents alerted via WhatsApp</p>
+          </div>
+          <div class="stat-card stat-card-orange">
+            <h4>Late Students</h4>
+            <div class="stat-big-val" id="reportLateCount">0</div>
+            <p>Marked late arrival</p>
+          </div>
+        </div>
+
+        <div class="data-table-container">
+          <table class="styled-table" id="reportDetailTable">
+            <thead>
+              <tr>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Class</th>
+                <th>Batch</th>
+                <th>Status</th>
+                <th>Parent Name</th>
+                <th>Parent WhatsApp</th>
+                <th>Direct Contact</th>
+              </tr>
+            </thead>
+            <tbody id="reportBodyRows">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ADMIN CONTROL PANEL -->
+    <section id="tab-admin" class="tab-section hidden">
+      <div class="admin-dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar">
+          <button class="admin-subtab active" data-subtab="admin-students">👨‍🎓 Student Management</button>
+          <button class="admin-subtab" data-subtab="admin-teachers">👨‍🏫 Teacher Management</button>
+          <button class="admin-subtab" data-subtab="admin-settings">⚙️ System & Time Window</button>
+          <button class="admin-subtab" data-subtab="admin-sheets">📊 Google Sheet Integration</button>
+          <hr class="sidebar-divider">
+          <button id="adminLogoutBtn" class="admin-subtab logout-btn">🚪 Logout Admin</button>
+        </aside>
+
+        <!-- Admin Content Area -->
+        <div class="admin-content-area">
+
+          <!-- Subtab: Students Manager -->
+          <div id="admin-students" class="admin-subpanel active">
+            <div class="panel-header-action">
+              <div>
+                <h3>Student Master Registry</h3>
+                <p>Manage enrolled students across Classes 4th to 8th and competitive batches.</p>
+              </div>
+              <button id="openAddStudentModalBtn" class="btn btn-primary">➕ Add New Student</button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Batch</th>
+                    <th>Parent Name</th>
+                    <th>WhatsApp Phone</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminStudentsTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Subtab: Teachers Manager -->
+          <div id="admin-teachers" class="admin-subpanel hidden">
+            <div class="panel-header-action">
+              <div>
+                <h3>Teacher & Faculty Registry</h3>
+                <p>Manage teachers and instructional staff.</p>
+              </div>
+              <button id="openAddTeacherModalBtn" class="btn btn-primary">➕ Add New Teacher</button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Teacher Name</th>
+                    <th>Subject / Department</th>
+                    <th>Phone Number</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTeachersTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Subtab: Settings & Time Window -->
+          <div id="admin-settings" class="admin-subpanel hidden">
+            <div class="settings-form-card">
+              <h3>⚙️ Attendance Timing & Policy Settings</h3>
+              <p>Configure the daily roll call window for teachers.</p>
+
+              <form id="settingsForm">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Restrict Attendance to Daily Time Window?</label>
+                    <select id="settingWindowEnabled" class="form-control">
+                      <option value="true">Yes, enforce daily time window (e.g. 8:00 AM – 10:00 AM)</option>
+                      <option value="false">No, allow teachers to mark attendance anytime (24 Hours Open)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Window Start Time (सुबह का समय):</label>
+                    <input type="time" id="settingWindowStart" class="form-control" value="08:00">
+                  </div>
+                  <div class="form-group">
+                    <label>Window End Time (समाप्ति समय):</label>
+                    <input type="time" id="settingWindowEnd" class="form-control" value="10:00">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Academy Helpline & WhatsApp Call Contact:</label>
+                    <input type="text" id="settingAcademyPhone" class="form-control" value="9817350860" required>
+                    <small class="form-hint">यह नंबर ऑटोमैटेड WhatsApp मैसेज और कॉल लिंक में जाएगा।</small>
+                  </div>
+                  <div class="form-group">
+                    <label>Admin Chairperson PIN (Master PIN):</label>
+                    <input type="password" id="settingAdminPin" class="form-control" value="9817" maxlength="6" required style="letter-spacing: 4px; font-weight: 700;">
+                    <small class="form-hint">Restricted Chairperson PIN (Default: <code>9817</code>)</small>
+                  </div>
+                </div>
+
+                <!-- Teacher Entry PIN Field -->
+                <div class="form-row" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35); padding: 14px; border-radius: 12px; margin-top: 10px;">
+                  <div class="form-group" style="flex: 1;">
+                    <label style="color: #fbbf24; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                      <span>🔑</span> Teacher Entry Login PIN (Website Open PIN):
+                    </label>
+                    <div style="position: relative;">
+                      <input type="text" id="settingTeacherPin" class="form-control" value="1234" maxlength="4" pattern="\d{4}" required style="letter-spacing: 6px; font-size: 1.2rem; font-weight: 800; color: #fbbf24; background: #0b1222;">
+                    </div>
+                    <small class="form-hint" style="color: #cbd5e1;">
+                      वेबसाइट खोलते समय Teacher से यही 4-अंकों का PIN माँगा जाता है। आप इसे कभी भी बदलकर <b>Save Settings</b> कर सकते हैं। (Default: <code>1234</code>)
+                    </small>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Subtab: Google Sheet Integration -->
+          <div id="admin-sheets" class="admin-subpanel hidden">
+            <div class="settings-form-card">
+              <div class="sheet-badge-header">
+                <h3>📊 Google Sheet Live Synchronization</h3>
+                <span class="badge-google">Connected to Google Docs</span>
+              </div>
+              <p>Target Sheet: 
+                <a href="https://docs.google.com/spreadsheets/d/1mBPfXrrX9NBog6IzCeXu2IbhBxAdwrNyc7wKzW4YnSk/edit" target="_blank" class="sheet-link">
+                  1mBPfXrrX9NBog6IzCeXu2IbhBxAdwrNyc7wKzW4YnSk ↗️
+                </a>
+              </p>
+
+              <div class="step-guide-box">
+                <h4>📌 1-Minute Setup Guide (Google Sheet Apps Script):</h4>
+                <ol>
+                  <li>अपनी Google Sheet खोलें और मेन्यू में <b>Extensions &gt; Apps Script</b> पर क्लिक करें।</li>
+                  <li>वहाँ <code>google_apps_script.js</code> का कोड पेस्ट करें (प्रोजेक्ट फ़ोल्डर में मौजूद है)।</li>
+                  <li>ऊपर <b>Deploy &gt; New deployment</b> चुनें, Type में <b>Web app</b> सेलेक्ट करें।</li>
+                  <li><b>Who has access</b> में <b>Anyone</b> चुनें और Deploy करके Web App URL कॉपी कर लें।</li>
+                  <li>नीचे दिए गए बॉक्स में URL पेस्ट करके <b>Save &amp; Sync</b> दबाएं!</li>
+                </ol>
+              </div>
+
+              <form id="googleSheetForm">
+                <div class="form-group">
+                  <label>Google Apps Script Web App URL:</label>
+                  <input type="url" id="settingSheetWebhookUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+                </div>
+                <div class="btn-group-row">
+                  <button type="submit" class="btn btn-primary">💾 Save Webhook URL</button>
+                  <button type="button" id="triggerFullSyncBtn" class="btn btn-sheet-action">🔄 Run Full Sync to Google Sheet Now</button>
+                </div>
+              </form>
+
+              <div id="syncStatusAlert" class="sync-status-box hidden"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: Admin Login Dialog -->
+  <div id="adminLoginModal" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>🔐 Admin Authorization Required</h3>
+        <button class="modal-close" id="closeAdminLoginModal">&times;</button>
+      </div>
+      <form id="adminLoginForm">
+        <div class="modal-body">
+          <p class="modal-instruction">केवल अधिकृत व्यवस्थापक (Admin) ही सेटिंग्स और छात्र डेटा प्रबंधित कर सकते हैं।</p>
+          <div class="form-group">
+            <label>Admin Email ID:</label>
+            <input type="email" id="loginAdminEmail" class="form-control" value="gsec.competition@gmail.com" readonly>
+          </div>
+          <div class="form-group">
+            <label>Admin PIN / Password:</label>
+            <input type="password" id="loginAdminPin" class="form-control" placeholder="4-अंकों का पिन दर्ज करें (Default: 9817)" required autofocus>
+          </div>
+          <div id="loginErrorMsg" class="error-text hidden">गलत क्रेडेंशियल! केवल gsec.competition@gmail.com अधिकृत है।</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelAdminLoginBtn">रद्द करें (Cancel)</button>
+          <button type="submit" class="btn btn-primary">प्रवेश करें (Login)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Add Student Dialog -->
+  <div id="addStudentModal" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>➕ नया विद्यार्थी जोड़ें (Add Student)</h3>
+        <button class="modal-close" id="closeAddStudentModal">&times;</button>
+      </div>
+      <form id="addStudentForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>विद्यार्थी का पूरा नाम (Student Name):</label>
+            <input type="text" id="newStudentName" class="form-control" placeholder="उदा. दक्ष कुमार" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>रोल नंबर (Roll Number):</label>
+              <input type="text" id="newStudentRoll" class="form-control" placeholder="उदा. SK-605" required>
+            </div>
+            <div class="form-group">
+              <label>कक्षा (Class):</label>
+              <select id="newStudentClass" class="form-control" required>
+                <option value="4th">4th</option>
+                <option value="5th">5th</option>
+                <option value="6th" selected>6th</option>
+                <option value="7th">7th</option>
+                <option value="8th">8th</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>बैच (Competitive Exam Batch):</label>
+            <select id="newStudentBatch" class="form-control" required>
+              <option value="Sainik School">🪖 Sainik School</option>
+              <option value="RMS">🎖️ RMS (Rashtriya Military School)</option>
+              <option value="RIMC">⚔️ RIMC (Rashtriya Indian Military College)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>माता / पिता का नाम (Parent Name):</label>
+            <input type="text" id="newStudentParent" class="form-control" placeholder="उदा. श्री राजेश शर्मा" required>
+          </div>
+          <div class="form-group">
+            <label>अभिभावक का WhatsApp मोबाइल नंबर:</label>
+            <input type="tel" id="newStudentPhone" class="form-control" placeholder="उदा. 9817350860" pattern="[0-9]{10}" required>
+            <small class="form-hint">10 अंकों का मोबाइल नंबर डालें (बिना 0 या +91 के)</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelAddStudentBtn">रद्द करें</button>
+          <button type="submit" class="btn btn-primary">💾 विद्यार्थी सुरक्षित करें</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Add Teacher Dialog -->
+  <div id="addTeacherModal" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>➕ नया शिक्षक जोड़ें (Add Teacher)</h3>
+        <button class="modal-close" id="closeAddTeacherModal">&times;</button>
+      </div>
+      <form id="addTeacherForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>शिक्षक का नाम (Teacher Name):</label>
+            <input type="text" id="newTeacherName" class="form-control" placeholder="उदा. श्री राहुल वर्मा" required>
+          </div>
+          <div class="form-group">
+            <label>विषय / विभाग (Subject):</label>
+            <input type="text" id="newTeacherSubject" class="form-control" placeholder="उदा. Mathematics / Reasoning" required>
+          </div>
+          <div class="form-group">
+            <label>मोबाइल नंबर (Phone Number):</label>
+            <input type="tel" id="newTeacherPhone" class="form-control" placeholder="उदा. 9817350860" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelAddTeacherBtn">रद्द करें</button>
+          <button type="submit" class="btn btn-primary">💾 शिक्षक जोड़ें</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+</body>
+</html>

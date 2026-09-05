@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sharda-gurukul-attendance
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: ""
+    startCommand: "python3 server.py"
+    envVars:
+      - key: PORT
+        value: 10000
