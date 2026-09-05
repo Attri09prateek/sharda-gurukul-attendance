@@ -18,7 +18,7 @@
       <div class="lock-brand">
         <div class="lock-emblem">🏫</div>
         <h2 class="lock-school-title">SHARDA GURUKUL ATTENDANCE SYSTEM</h2>
-        <p class="lock-school-subtitle">Sainik School • RMS • RIMC — Classes 4th to 8th</p>
+        <p class="lock-school-subtitle">Sainik School • RMS • RIMC • Navodaya — Classes & Batches</p>
         <div style="margin-top: 8px;">
           <a href="https://shardagurukul.in" target="_blank" rel="noopener" class="lock-portal-link">
             🌐 Official Website: ShardaGurukul.in ↗️
@@ -91,7 +91,7 @@
         </div>
         <div class="brand-text">
           <h1 class="brand-title">SHARDA GURUKUL ATTENDANCE SYSTEM</h1>
-          <p class="brand-subtitle">Sainik School • RMS • RIMC — Classes 4th to 8th</p>
+          <p class="brand-subtitle">Sainik School • RMS • RIMC • Navodaya — Classes & Batches</p>
         </div>
       </div>
 
@@ -219,6 +219,7 @@
               <button class="pill-btn" data-batch="Sainik School">🪖 Sainik School</button>
               <button class="pill-btn" data-batch="RMS">🎖️ RMS</button>
               <button class="pill-btn" data-batch="RIMC">⚔️ RIMC</button>
+              <button class="pill-btn" data-batch="Navodaya">🏫 Navodaya</button>
             </div>
           </div>
         </div>
@@ -432,6 +433,7 @@
         <aside class="admin-sidebar">
           <button class="admin-subtab active" data-subtab="admin-students">👨‍🎓 Student Management</button>
           <button class="admin-subtab" data-subtab="admin-teachers">👨‍🏫 Teacher Management</button>
+          <button class="admin-subtab" data-subtab="admin-groups">🏫 Classes & Groups</button>
           <button class="admin-subtab" data-subtab="admin-settings">⚙️ System & Time Window</button>
           <button class="admin-subtab" data-subtab="admin-sheets">📊 Google Sheet Integration</button>
           <hr class="sidebar-divider">
@@ -496,6 +498,85 @@
                   <!-- Rendered dynamically -->
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- Subtab: Classes & Groups / Batches Manager -->
+          <div id="admin-groups" class="admin-subpanel hidden">
+            <div class="groups-management-grid">
+              <!-- Left Card: Classes Management -->
+              <div class="settings-form-card">
+                <div class="panel-header-action">
+                  <div>
+                    <h3>🏫 Classes Management (कक्षाएं)</h3>
+                    <p>Add, edit or remove classes (e.g., 4th, 5th, 6th, 7th, 8th, 9th...).</p>
+                  </div>
+                </div>
+
+                <!-- Add Class Form -->
+                <form id="addClassForm" class="inline-add-form" style="display: flex; gap: 8px; margin-top: 10px;">
+                  <input type="text" id="newClassNameInput" class="form-control" placeholder="कक्षा का नाम (उदा. 9th)" required style="flex: 1;">
+                  <button type="submit" class="btn btn-primary" style="white-space: nowrap;">➕ Add Class</button>
+                </form>
+
+                <div class="table-responsive" style="margin-top: 15px;">
+                  <table class="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Class</th>
+                        <th>Students</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminClassesTableBody">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Right Card: Groups / Batches Management -->
+              <div class="settings-form-card">
+                <div class="panel-header-action">
+                  <div>
+                    <h3>🎖️ Groups & Batches (प्रतियोगी परीक्षा समूह)</h3>
+                    <p>Manage batches like Sainik School, RMS, RIMC, Navodaya & custom groups.</p>
+                  </div>
+                </div>
+
+                <!-- Add Batch Form -->
+                <form id="addBatchForm" class="inline-add-form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                  <div style="display: flex; gap: 8px;">
+                    <select id="newBatchIconSelect" class="form-control" style="max-width: 130px; font-size: 0.95rem;">
+                      <option value="🏫">🏫 School</option>
+                      <option value="🪖">🪖 Sainik</option>
+                      <option value="🎖️">🎖️ RMS</option>
+                      <option value="⚔️">⚔️ RIMC</option>
+                      <option value="📚">📚 Navodaya</option>
+                      <option value="🎯">🎯 Target</option>
+                      <option value="🌟">🌟 Super</option>
+                      <option value="🚀">🚀 Fast-track</option>
+                    </select>
+                    <input type="text" id="newBatchNameInput" class="form-control" placeholder="ग्रुप/बैच नाम (उदा. Navodaya, NDA...)" required style="flex: 1;">
+                  </div>
+                  <button type="submit" class="btn btn-primary" style="align-self: flex-start;">➕ Add Group / Batch</button>
+                </form>
+
+                <div class="table-responsive" style="margin-top: 15px;">
+                  <table class="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Group / Batch</th>
+                        <th>Students</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminBatchesTableBody">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -713,6 +794,71 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelAddTeacherBtn">रद्द करें</button>
           <button type="submit" class="btn btn-primary">💾 शिक्षक जोड़ें</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: Edit Class Dialog -->
+  <div id="editClassModal" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>✏️ कक्षा का नाम बदलें (Edit Class)</h3>
+        <button class="modal-close" id="closeEditClassModal">&times;</button>
+      </div>
+      <form id="editClassForm">
+        <input type="hidden" id="editClassId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>कक्षा का नया नाम (Class Name):</label>
+            <input type="text" id="editClassNameInput" class="form-control" placeholder="उदा. 9th" required>
+            <small class="form-hint" style="color: #94a3b8; display: block; margin-top: 6px;">
+              नोट: कक्षा का नाम बदलने पर इस कक्षा के सभी विद्यार्थियों का डेटा स्वतः नए नाम पर अपडेट हो जाएगा।
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelEditClassBtn">रद्द करें</button>
+          <button type="submit" class="btn btn-primary">💾 बदलाव सुरक्षित करें</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 5: Edit Batch / Group Dialog -->
+  <div id="editBatchModal" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>✏️ ग्रुप / बैच बदलें (Edit Group)</h3>
+        <button class="modal-close" id="closeEditBatchModal">&times;</button>
+      </div>
+      <form id="editBatchForm">
+        <input type="hidden" id="editBatchId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>आइकन चुनें (Group Icon):</label>
+            <select id="editBatchIconSelect" class="form-control">
+              <option value="🏫">🏫 School / Academy</option>
+              <option value="🪖">🪖 Sainik / Defense</option>
+              <option value="🎖️">🎖️ RMS / Military</option>
+              <option value="⚔️">⚔️ RIMC / Cadet</option>
+              <option value="📚">📚 Navodaya / JNV</option>
+              <option value="🎯">🎯 Target / Foundation</option>
+              <option value="🌟">🌟 Special / Super</option>
+              <option value="🚀">🚀 Fast Track</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ग्रुप / बैच का नाम (Group Name):</label>
+            <input type="text" id="editBatchNameInput" class="form-control" placeholder="उदा. Navodaya Vidyalaya" required>
+            <small class="form-hint" style="color: #94a3b8; display: block; margin-top: 6px;">
+              नोट: ग्रुप का नाम बदलने पर नामांकित विद्यार्थियों का बैच स्वतः अपडेट हो जाएगा।
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelEditBatchBtn">रद्द करें</button>
+          <button type="submit" class="btn btn-primary">💾 बदलाव सुरक्षित करें</button>
         </div>
       </form>
     </div>

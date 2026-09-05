@@ -23,6 +23,9 @@ const state = {
     window_end: '10:00',
     google_sheet_webhook_url: ''
   },
+  classes: [],
+  batches: [],
+  adminPin: sessionStorage.getItem('sgj_admin_pin') || '',
   students: [],
   teachers: [],
   studentAttendance: {}, // student_id -> { status, alert_sent, recorded_at }
@@ -202,7 +205,36 @@ const elements = {
   cancelAddTeacherBtn: document.getElementById('cancelAddTeacherBtn'),
   addTeacherForm: document.getElementById('addTeacherForm'),
 
-  toastContainer: document.getElementById('toastContainer')
+  toastContainer: document.getElementById('toastContainer'),
+
+  // Classes & Groups Management
+  addClassForm: document.getElementById('addClassForm'),
+  newClassNameInput: document.getElementById('newClassNameInput'),
+  adminClassesTableBody: document.getElementById('adminClassesTableBody'),
+  addBatchForm: document.getElementById('addBatchForm'),
+  newBatchNameInput: document.getElementById('newBatchNameInput'),
+  newBatchIconSelect: document.getElementById('newBatchIconSelect'),
+  adminBatchesTableBody: document.getElementById('adminBatchesTableBody'),
+
+  // Student Form Dropdowns
+  newStudentClass: document.getElementById('newStudentClass'),
+  newStudentBatch: document.getElementById('newStudentBatch'),
+
+  // Edit Modals
+  editClassModal: document.getElementById('editClassModal'),
+  closeEditClassModal: document.getElementById('closeEditClassModal'),
+  cancelEditClassBtn: document.getElementById('cancelEditClassBtn'),
+  editClassForm: document.getElementById('editClassForm'),
+  editClassId: document.getElementById('editClassId'),
+  editClassNameInput: document.getElementById('editClassNameInput'),
+
+  editBatchModal: document.getElementById('editBatchModal'),
+  closeEditBatchModal: document.getElementById('closeEditBatchModal'),
+  cancelEditBatchBtn: document.getElementById('cancelEditBatchBtn'),
+  editBatchForm: document.getElementById('editBatchForm'),
+  editBatchId: document.getElementById('editBatchId'),
+  editBatchNameInput: document.getElementById('editBatchNameInput'),
+  editBatchIconSelect: document.getElementById('editBatchIconSelect')
 };
 
 // Initialize Application
@@ -222,6 +254,10 @@ async function initApp() {
 
   // Apply UI according to unlocked status & role
   applyRoleUI();
+
+  // Always load classes and batches for filters and dropdowns
+  await loadClasses();
+  await loadBatches();
 
   // Only load student and attendance records if unlocked
   if (state.isUnlocked) {
@@ -340,6 +376,9 @@ async function loadStudents() {
       state.students = res.students;
       elements.studentCountBadge.textContent = state.students.length;
       renderAdminStudents();
+      // Also refresh classes and batches to update student count badges
+      loadClasses();
+      loadBatches();
     }
   } catch (err) {
     showToast('Failed to load students', 'error');
@@ -356,6 +395,34 @@ async function loadTeachers() {
     }
   } catch (err) {
     showToast('Failed to load teachers', 'error');
+  }
+}
+
+async function loadClasses() {
+  try {
+    const res = await api.get('/api/classes');
+    if (res && res.classes) {
+      state.classes = res.classes;
+      renderClassFilters();
+      populateClassSelects();
+      renderAdminClasses();
+    }
+  } catch (err) {
+    console.error('Failed to load classes:', err);
+  }
+}
+
+async function loadBatches() {
+  try {
+    const res = await api.get('/api/batches');
+    if (res && res.batches) {
+      state.batches = res.batches;
+      renderBatchFilters();
+      populateBatchSelects();
+      renderAdminBatches();
+    }
+  } catch (err) {
+    console.error('Failed to load batches:', err);
   }
 }
 
@@ -554,6 +621,103 @@ function updateBatchSubmissionUI() {
       elements.submitBatchToSheetBtn.className = 'btn-submit-sheet ready';
       elements.submitBtnText.textContent = `✓ Store to Google Sheet (All ${totalCount} Ready)`;
     }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// DYNAMIC CLASS & BATCH FILTERS & SELECTS
+// -----------------------------------------------------------------------------
+function renderClassFilters() {
+  if (!elements.classFilterGroup) return;
+  elements.classFilterGroup.innerHTML = '';
+  
+  // "All" button
+  const allBtn = document.createElement('button');
+  allBtn.className = `pill-btn ${state.selectedClass === 'all' ? 'active' : ''}`;
+  allBtn.setAttribute('data-class', 'all');
+  allBtn.textContent = 'All';
+  allBtn.addEventListener('click', () => {
+    elements.classFilterGroup.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+    allBtn.classList.add('active');
+    state.selectedClass = 'all';
+    renderStudentChecklist();
+  });
+  elements.classFilterGroup.appendChild(allBtn);
+
+  // Dynamic class buttons
+  state.classes.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = `pill-btn ${state.selectedClass === c.name ? 'active' : ''}`;
+    btn.setAttribute('data-class', c.name);
+    btn.textContent = c.name;
+    btn.addEventListener('click', () => {
+      elements.classFilterGroup.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.selectedClass = c.name;
+      renderStudentChecklist();
+    });
+    elements.classFilterGroup.appendChild(btn);
+  });
+}
+
+function renderBatchFilters() {
+  if (!elements.batchFilterGroup) return;
+  elements.batchFilterGroup.innerHTML = '';
+
+  // "All Batches" button
+  const allBtn = document.createElement('button');
+  allBtn.className = `pill-btn ${state.selectedBatch === 'all' ? 'active' : ''}`;
+  allBtn.setAttribute('data-batch', 'all');
+  allBtn.textContent = 'All Batches';
+  allBtn.addEventListener('click', () => {
+    elements.batchFilterGroup.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+    allBtn.classList.add('active');
+    state.selectedBatch = 'all';
+    renderStudentChecklist();
+  });
+  elements.batchFilterGroup.appendChild(allBtn);
+
+  // Dynamic batch buttons
+  state.batches.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = `pill-btn ${state.selectedBatch === b.name ? 'active' : ''}`;
+    btn.setAttribute('data-batch', b.name);
+    btn.textContent = `${b.icon || '🎯'} ${b.name}`;
+    btn.addEventListener('click', () => {
+      elements.batchFilterGroup.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.selectedBatch = b.name;
+      renderStudentChecklist();
+    });
+    elements.batchFilterGroup.appendChild(btn);
+  });
+}
+
+function populateClassSelects() {
+  if (elements.newStudentClass) {
+    const currentVal = elements.newStudentClass.value;
+    elements.newStudentClass.innerHTML = '';
+    state.classes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = c.name;
+      if (currentVal === c.name) opt.selected = true;
+      elements.newStudentClass.appendChild(opt);
+    });
+  }
+}
+
+function populateBatchSelects() {
+  if (elements.newStudentBatch) {
+    const currentVal = elements.newStudentBatch.value;
+    elements.newStudentBatch.innerHTML = '';
+    state.batches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.name;
+      opt.textContent = `${b.icon || '🎯'} ${b.name}`;
+      if (currentVal === b.name) opt.selected = true;
+      elements.newStudentBatch.appendChild(opt);
+    });
   }
 }
 
@@ -1087,6 +1251,266 @@ window.deleteTeacher = async function(id) {
   }
 };
 
+// -----------------------------------------------------------------------------
+// ADMIN CLASSES & GROUPS / BATCHES MANAGEMENT
+// -----------------------------------------------------------------------------
+function getAdminPin() {
+  if (state.adminPin) return state.adminPin;
+  const saved = sessionStorage.getItem('sgj_admin_pin');
+  if (saved) {
+    state.adminPin = saved;
+    return saved;
+  }
+  const entered = prompt('कृपया चेयरपर्सन / Admin PIN दर्ज करें (Default: 9817):');
+  if (entered) {
+    state.adminPin = entered.trim();
+    sessionStorage.setItem('sgj_admin_pin', state.adminPin);
+    return state.adminPin;
+  }
+  return null;
+}
+
+function renderAdminClasses() {
+  const tbody = elements.adminClassesTableBody;
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  if (state.classes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 16px;">कोई कक्षा नहीं मिली।</td></tr>';
+    return;
+  }
+
+  state.classes.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${c.name}</b></td>
+      <td>
+        <span class="badge-student-count ${c.student_count > 0 ? '' : 'empty'}">
+          ${c.student_count || 0} छात्र
+        </span>
+      </td>
+      <td>
+        <button class="btn-edit" onclick="openEditClassModal(${c.id}, '${c.name.replace(/'/g, "\\'")}')">✏️ Edit</button>
+        <button class="btn-delete" onclick="deleteClass(${c.id}, '${c.name.replace(/'/g, "\\'")}', ${c.student_count || 0})">🗑️ Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAdminBatches() {
+  const tbody = elements.adminBatchesTableBody;
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (state.batches.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 16px;">कोई ग्रुप/बैच नहीं मिला।</td></tr>';
+    return;
+  }
+
+  state.batches.forEach(b => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <span class="group-row-name">
+          <span class="group-row-icon">${b.icon || '🎯'}</span>
+          <span>${b.name}</span>
+        </span>
+      </td>
+      <td>
+        <span class="badge-student-count ${b.student_count > 0 ? '' : 'empty'}">
+          ${b.student_count || 0} छात्र
+        </span>
+      </td>
+      <td>
+        <button class="btn-edit" onclick="openEditBatchModal(${b.id}, '${b.name.replace(/'/g, "\\'")}', '${b.icon || '🎯'}')">✏️ Edit</button>
+        <button class="btn-delete" onclick="deleteBatch(${b.id}, '${b.name.replace(/'/g, "\\'")}', ${b.student_count || 0})">🗑️ Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.openEditClassModal = function(id, name) {
+  if (elements.editClassId) elements.editClassId.value = id;
+  if (elements.editClassNameInput) elements.editClassNameInput.value = name;
+  if (elements.editClassModal) elements.editClassModal.classList.remove('hidden');
+};
+
+window.deleteClass = async function(id, name, studentCount) {
+  if (studentCount > 0) {
+    alert(`सुरक्षा अलर्ट: Class '${name}' में अभी ${studentCount} छात्र नामांकित हैं! पहले उन्हें किसी अन्य क्लास में ट्रांसफर करें या डिलीट करें।`);
+    return;
+  }
+  if (!confirm(`क्या आप वाकई Class '${name}' को हटाना चाहते हैं?`)) return;
+  const admin_pin = getAdminPin();
+  if (!admin_pin) return;
+
+  try {
+    const res = await api.post('/api/classes/delete', { id, admin_pin });
+    if (res.success) {
+      showToast(res.message, 'success');
+      await loadClasses();
+    } else {
+      showToast(res.message || 'कक्षा हटाने में त्रुटि', 'error');
+    }
+  } catch (err) {
+    showToast('सर्वर एरर', 'error');
+  }
+};
+
+window.openEditBatchModal = function(id, name, icon) {
+  if (elements.editBatchId) elements.editBatchId.value = id;
+  if (elements.editBatchNameInput) elements.editBatchNameInput.value = name;
+  if (elements.editBatchIconSelect) elements.editBatchIconSelect.value = icon || '🎯';
+  if (elements.editBatchModal) elements.editBatchModal.classList.remove('hidden');
+};
+
+window.deleteBatch = async function(id, name, studentCount) {
+  if (studentCount > 0) {
+    alert(`सुरक्षा अलर्ट: ग्रुप/बैच '${name}' में अभी ${studentCount} छात्र नामांकित हैं! पहले उन्हें किसी अन्य बैच में बदलें या डिलीट करें।`);
+    return;
+  }
+  if (!confirm(`क्या आप वाकई ग्रुप/बैच '${name}' को हटाना चाहते हैं?`)) return;
+  const admin_pin = getAdminPin();
+  if (!admin_pin) return;
+
+  try {
+    const res = await api.post('/api/batches/delete', { id, admin_pin });
+    if (res.success) {
+      showToast(res.message, 'success');
+      await loadBatches();
+    } else {
+      showToast(res.message || 'ग्रुप हटाने में त्रुटि', 'error');
+    }
+  } catch (err) {
+    showToast('सर्वर एरर', 'error');
+  }
+};
+
+// Modal Listeners for Class & Batch Edit/Add
+if (elements.closeEditClassModal) {
+  elements.closeEditClassModal.addEventListener('click', () => {
+    elements.editClassModal.classList.add('hidden');
+  });
+}
+if (elements.cancelEditClassBtn) {
+  elements.cancelEditClassBtn.addEventListener('click', () => {
+    elements.editClassModal.classList.add('hidden');
+  });
+}
+
+if (elements.editClassForm) {
+  elements.editClassForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = elements.editClassId.value;
+    const name = elements.editClassNameInput.value.trim();
+    if (!name) return;
+    const admin_pin = getAdminPin();
+    if (!admin_pin) return;
+
+    try {
+      const res = await api.post('/api/classes/update', { id, name, admin_pin });
+      if (res.success) {
+        showToast(res.message, 'success');
+        elements.editClassModal.classList.add('hidden');
+        await loadClasses();
+        await loadStudents();
+        renderStudentChecklist();
+      } else {
+        showToast(res.message || 'कक्षा अपडेट करने में त्रुटि', 'error');
+      }
+    } catch (err) {
+      showToast('सर्वर एरर', 'error');
+    }
+  });
+}
+
+if (elements.addClassForm) {
+  elements.addClassForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = elements.newClassNameInput.value.trim();
+    if (!name) return;
+    const admin_pin = getAdminPin();
+    if (!admin_pin) return;
+
+    try {
+      const res = await api.post('/api/classes', { name, admin_pin });
+      if (res.success) {
+        showToast(res.message, 'success');
+        elements.newClassNameInput.value = '';
+        await loadClasses();
+      } else {
+        showToast(res.message || 'कक्षा जोड़ने में त्रुटि', 'error');
+      }
+    } catch (err) {
+      showToast('सर्वर एरर', 'error');
+    }
+  });
+}
+
+if (elements.closeEditBatchModal) {
+  elements.closeEditBatchModal.addEventListener('click', () => {
+    elements.editBatchModal.classList.add('hidden');
+  });
+}
+if (elements.cancelEditBatchBtn) {
+  elements.cancelEditBatchBtn.addEventListener('click', () => {
+    elements.editBatchModal.classList.add('hidden');
+  });
+}
+
+if (elements.editBatchForm) {
+  elements.editBatchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = elements.editBatchId.value;
+    const name = elements.editBatchNameInput.value.trim();
+    const icon = elements.editBatchIconSelect.value;
+    if (!name) return;
+    const admin_pin = getAdminPin();
+    if (!admin_pin) return;
+
+    try {
+      const res = await api.post('/api/batches/update', { id, name, icon, admin_pin });
+      if (res.success) {
+        showToast(res.message, 'success');
+        elements.editBatchModal.classList.add('hidden');
+        await loadBatches();
+        await loadStudents();
+        renderStudentChecklist();
+      } else {
+        showToast(res.message || 'ग्रुप अपडेट करने में त्रुटि', 'error');
+      }
+    } catch (err) {
+      showToast('सर्वर एरर', 'error');
+    }
+  });
+}
+
+if (elements.addBatchForm) {
+  elements.addBatchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = elements.newBatchNameInput.value.trim();
+    const icon = elements.newBatchIconSelect.value;
+    if (!name) return;
+    const admin_pin = getAdminPin();
+    if (!admin_pin) return;
+
+    try {
+      const res = await api.post('/api/batches', { name, icon, admin_pin });
+      if (res.success) {
+        showToast(res.message, 'success');
+        elements.newBatchNameInput.value = '';
+        await loadBatches();
+      } else {
+        showToast(res.message || 'ग्रुप जोड़ने में त्रुटि', 'error');
+      }
+    } catch (err) {
+      showToast('सर्वर एरर', 'error');
+    }
+  });
+}
+
 // Admin Login Dialog
 elements.adminModeBtn.addEventListener('click', () => {
   if (state.isAdmin) {
@@ -1342,8 +1766,10 @@ elements.adminLoginForm.addEventListener('submit', async (e) => {
     if (res.success) {
       state.isUnlocked = true;
       state.isAdmin = true;
+      state.adminPin = pin;
       sessionStorage.setItem('sgj_unlocked', 'true');
       sessionStorage.setItem('sgj_admin', 'true');
+      sessionStorage.setItem('sgj_admin_pin', pin);
       elements.adminLoginModal.classList.add('hidden');
       applyRoleUI();
       showToast('Admin / Chairperson Access Granted!', 'success');
@@ -1352,6 +1778,8 @@ elements.adminLoginForm.addEventListener('submit', async (e) => {
 
       // Load full data
       await loadSettings();
+      await loadClasses();
+      await loadBatches();
       await loadStudents();
       await loadTeachers();
       await loadStudentAttendance();
@@ -1370,7 +1798,9 @@ elements.adminLoginForm.addEventListener('submit', async (e) => {
 // Admin Logout inside Admin Tab
 elements.adminLogoutBtn.addEventListener('click', () => {
   state.isAdmin = false;
+  state.adminPin = '';
   sessionStorage.removeItem('sgj_admin');
+  sessionStorage.removeItem('sgj_admin_pin');
   applyRoleUI();
   switchTab('tab-students');
   checkAttendanceWindow();
@@ -1379,6 +1809,8 @@ elements.adminLogoutBtn.addEventListener('click', () => {
 
 // Add Student Modal
 elements.openAddStudentModalBtn.addEventListener('click', () => {
+  populateClassSelects();
+  populateBatchSelects();
   elements.addStudentModal.classList.remove('hidden');
 });
 elements.closeAddStudentModal.addEventListener('click', () => {
@@ -1552,8 +1984,15 @@ function setupEventListeners() {
       elements.adminSubtabs.forEach(s => s.classList.remove('active'));
       elements.adminSubpanels.forEach(p => p.classList.add('hidden'));
       subtab.classList.add('active');
-      const targetPanel = document.getElementById(subtab.getAttribute('data-subtab'));
-      if (targetPanel) targetPanel.classList.remove('hidden');
+      const targetPanelId = subtab.getAttribute('data-subtab');
+      const targetPanel = document.getElementById(targetPanelId);
+      if (targetPanel) {
+        targetPanel.classList.remove('hidden');
+        if (targetPanelId === 'admin-groups') {
+          renderAdminClasses();
+          renderAdminBatches();
+        }
+      }
     });
   });
 
@@ -1572,25 +2011,9 @@ function setupEventListeners() {
     loadReports(e.target.value);
   });
 
-  // Class Filter Pills
-  elements.classFilterGroup.querySelectorAll('.pill-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      elements.classFilterGroup.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.selectedClass = btn.getAttribute('data-class');
-      renderStudentChecklist();
-    });
-  });
-
-  // Batch Filter Pills
-  elements.batchFilterGroup.querySelectorAll('.pill-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      elements.batchFilterGroup.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.selectedBatch = btn.getAttribute('data-batch');
-      renderStudentChecklist();
-    });
-  });
+  // Dynamic Class & Batch Filter Pills
+  renderClassFilters();
+  renderBatchFilters();
 
   // Search Input
   elements.studentSearchInput.addEventListener('input', (e) => {

@@ -107,6 +107,56 @@ def init_db():
     )
     """)
 
+    # Classes table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS classes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        display_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Batches / Groups table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS batches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        icon TEXT DEFAULT '🎯',
+        display_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Default classes
+    cursor.execute("SELECT COUNT(*) FROM classes")
+    if cursor.fetchone()[0] == 0:
+        default_classes = [("4th", 1), ("5th", 2), ("6th", 3), ("7th", 4), ("8th", 5)]
+        cursor.executemany("INSERT OR IGNORE INTO classes (name, display_order) VALUES (?, ?)", default_classes)
+
+    # Default batches (including Navodaya)
+    cursor.execute("SELECT COUNT(*) FROM batches")
+    if cursor.fetchone()[0] == 0:
+        default_batches = [
+            ("Sainik School", "🪖", 1),
+            ("RMS", "🎖️", 2),
+            ("RIMC", "⚔️", 3),
+            ("Navodaya", "🏫", 4)
+        ]
+        cursor.executemany("INSERT OR IGNORE INTO batches (name, icon, display_order) VALUES (?, ?, ?)", default_batches)
+
+    # Ensure Navodaya exists even if batches already had existing records
+    cursor.execute("INSERT OR IGNORE INTO batches (name, icon, display_order) VALUES ('Navodaya', '🏫', 4)")
+
+    # Ensure any existing classes and batches in students are also recorded
+    cursor.execute("SELECT DISTINCT class_name FROM students WHERE class_name IS NOT NULL AND class_name != ''")
+    for r in cursor.fetchall():
+        cursor.execute("INSERT OR IGNORE INTO classes (name) VALUES (?)", (r[0],))
+
+    cursor.execute("SELECT DISTINCT batch_name FROM students WHERE batch_name IS NOT NULL AND batch_name != ''")
+    for r in cursor.fetchall():
+        cursor.execute("INSERT OR IGNORE INTO batches (name, icon) VALUES (?, '🎯')", (r[0],))
+
     # Default settings
     default_settings = {
         "admin_email": ADMIN_EMAIL,
@@ -227,6 +277,16 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
+    def _is_admin(self, data):
+        pin = (data.get("admin_pin") or "").strip()
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM settings WHERE key='admin_pin'")
+        row = cursor.fetchone()
+        conn.close()
+        correct_pin = row["value"].strip() if row else "9050"
+        return bool(pin and pin == correct_pin)
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -252,6 +312,36 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
             settings = {row["key"]: row["value"] for row in cursor.fetchall()}
             conn.close()
             self._send_json(200, {"success": True, "settings": settings})
+            return
+
+        # Classes API (Get all classes)
+        if path == "/api/classes":
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("""
+            SELECT c.id, c.name, c.display_order,
+                   (SELECT COUNT(*) FROM students s WHERE s.class_name = c.name) as student_count
+            FROM classes c
+            ORDER BY c.display_order ASC, c.id ASC
+            """)
+            classes = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            self._send_json(200, {"success": True, "classes": classes})
+            return
+
+        # Batches / Groups API (Get all batches)
+        if path == "/api/batches":
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("""
+            SELECT b.id, b.name, b.icon, b.display_order,
+                   (SELECT COUNT(*) FROM students s WHERE s.batch_name = b.name) as student_count
+            FROM batches b
+            ORDER BY b.display_order ASC, b.id ASC
+            """)
+            batches = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            self._send_json(200, {"success": True, "batches": batches})
             return
 
         # Students API
@@ -894,6 +984,178 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
             conn.commit()
             conn.close()
             self._send_json(200, {"success": True, "message": "Teacher removed"})
+            return
+
+        # ----------------- Classes Management (Admin Only) -----------------
+        # Add Class
+        if path == "/api/classes":
+            if not self._is_admin(data):
+                self._send_json(403, {"success": False, "message": "गलत Chairperson PIN! केवल अधिकृत चेयरपर्सन ही क्लास जोड़ सकते हैं।"})
+                return
+            name = (data.get("name") or "").strip()
+            if not name:
+                self._send_json(400, {"success": False, "message": "Class का नाम अनिवार्य है।"})
+                return
+            conn = get_db()
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT COALESCE(MAX(display_order), 0) + 1 FROM classes")
+                next_order = cursor.fetchone()[0]
+                cursor.execute("INSERT INTO classes (name, display_order) VALUES (?, ?)", (name, next_order))
+                new_id = cursor.lastrowid
+                conn.commit()
+                conn.close()
+                self._send_json(201, {"success": True, "id": new_id, "message": f"Class '{name}' सफलतापूर्वक जोड़ी गई!"})
+            except sqlite3.IntegrityError:
+                conn.close()
+                self._send_json(400, {"success": False, "message": f"Class '{name}' पहले से मौजूद है!"})
+            return
+
+        # Update Class Name
+        if path == "/api/classes/update":
+            if not self._is_admin(data):
+                self._send_json(403, {"success": False, "message": "गलत Chairperson PIN! केवल अधिकृत चेयरपर्सन ही क्लास बदल सकते हैं।"})
+                return
+            class_id = data.get("id")
+            new_name = (data.get("name") or "").strip()
+            if not class_id or not new_name:
+                self._send_json(400, {"success": False, "message": "Class ID और नया नाम अनिवार्य है।"})
+                return
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM classes WHERE id = ?", (class_id,))
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                self._send_json(404, {"success": False, "message": "Class नहीं मिली।"})
+                return
+            old_name = row["name"]
+            try:
+                cursor.execute("UPDATE classes SET name = ? WHERE id = ?", (new_name, class_id))
+                # Cascade update to students and finalized_batches
+                if old_name != new_name:
+                    cursor.execute("UPDATE students SET class_name = ? WHERE class_name = ?", (new_name, old_name))
+                    cursor.execute("UPDATE finalized_batches SET class_name = ? WHERE class_name = ?", (new_name, old_name))
+                conn.commit()
+                conn.close()
+                self._send_json(200, {"success": True, "message": f"Class का नाम बदलकर '{new_name}' कर दिया गया!"})
+            except sqlite3.IntegrityError:
+                conn.close()
+                self._send_json(400, {"success": False, "message": f"Class '{new_name}' नाम पहले से मौजूद है!"})
+            return
+
+        # Delete Class
+        if path == "/api/classes/delete":
+            if not self._is_admin(data):
+                self._send_json(403, {"success": False, "message": "गलत Chairperson PIN! केवल अधिकृत चेयरपर्सन ही क्लास हटा सकते हैं।"})
+                return
+            class_id = data.get("id")
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM classes WHERE id = ?", (class_id,))
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                self._send_json(404, {"success": False, "message": "Class नहीं मिली।"})
+                return
+            class_name = row["name"]
+            cursor.execute("SELECT COUNT(*) FROM students WHERE class_name = ?", (class_name,))
+            student_count = cursor.fetchone()[0]
+            if student_count > 0:
+                conn.close()
+                self._send_json(400, {"success": False, "message": f"सुरक्षा अलर्ट: Class '{class_name}' में अभी {student_count} छात्र नामांकित हैं! पहले उन्हें किसी अन्य क्लास में ट्रांसफर करें या डिलीट करें।"})
+                return
+            cursor.execute("DELETE FROM classes WHERE id = ?", (class_id,))
+            conn.commit()
+            conn.close()
+            self._send_json(200, {"success": True, "message": f"Class '{class_name}' सफलतापूर्वक हटाई गई!"})
+            return
+
+        # ----------------- Batches / Groups Management (Admin Only) -----------------
+        # Add Batch / Group
+        if path == "/api/batches":
+            if not self._is_admin(data):
+                self._send_json(403, {"success": False, "message": "गलत Chairperson PIN! केवल अधिकृत चेयरपर्सन ही बैच/ग्रुप जोड़ सकते हैं।"})
+                return
+            name = (data.get("name") or "").strip()
+            icon = (data.get("icon") or "🎯").strip() or "🎯"
+            if not name:
+                self._send_json(400, {"success": False, "message": "ग्रुप / बैच का नाम अनिवार्य है।"})
+                return
+            conn = get_db()
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT COALESCE(MAX(display_order), 0) + 1 FROM batches")
+                next_order = cursor.fetchone()[0]
+                cursor.execute("INSERT INTO batches (name, icon, display_order) VALUES (?, ?, ?)", (name, icon, next_order))
+                new_id = cursor.lastrowid
+                conn.commit()
+                conn.close()
+                self._send_json(201, {"success": True, "id": new_id, "message": f"ग्रुप/बैच '{name}' सफलतापूर्वक जोड़ा गया!"})
+            except sqlite3.IntegrityError:
+                conn.close()
+                self._send_json(400, {"success": False, "message": f"ग्रुप/बैच '{name}' पहले से मौजूद है!"})
+            return
+
+        # Update Batch / Group
+        if path == "/api/batches/update":
+            if not self._is_admin(data):
+                self._send_json(403, {"success": False, "message": "गलत Chairperson PIN! केवल अधिकृत चेयरपर्सन ही बैच/ग्रुप बदल सकते हैं।"})
+                return
+            batch_id = data.get("id")
+            new_name = (data.get("name") or "").strip()
+            new_icon = (data.get("icon") or "🎯").strip() or "🎯"
+            if not batch_id or not new_name:
+                self._send_json(400, {"success": False, "message": "Batch ID और नया नाम अनिवार्य है।"})
+                return
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM batches WHERE id = ?", (batch_id,))
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                self._send_json(404, {"success": False, "message": "ग्रुप/बैच नहीं मिला।"})
+                return
+            old_name = row["name"]
+            try:
+                cursor.execute("UPDATE batches SET name = ?, icon = ? WHERE id = ?", (new_name, new_icon, batch_id))
+                # Cascade update to students and finalized_batches
+                if old_name != new_name:
+                    cursor.execute("UPDATE students SET batch_name = ? WHERE batch_name = ?", (new_name, old_name))
+                    cursor.execute("UPDATE finalized_batches SET batch_name = ? WHERE batch_name = ?", (new_name, old_name))
+                conn.commit()
+                conn.close()
+                self._send_json(200, {"success": True, "message": f"ग्रुप/बैच '{new_name}' सफलतापूर्वक अपडेट किया गया!"})
+            except sqlite3.IntegrityError:
+                conn.close()
+                self._send_json(400, {"success": False, "message": f"ग्रुप/बैच '{new_name}' नाम पहले से मौजूद है!"})
+            return
+
+        # Delete Batch / Group
+        if path == "/api/batches/delete":
+            if not self._is_admin(data):
+                self._send_json(403, {"success": False, "message": "गलत Chairperson PIN! केवल अधिकृत चेयरपर्सन ही बैच/ग्रुप हटा सकते हैं।"})
+                return
+            batch_id = data.get("id")
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM batches WHERE id = ?", (batch_id,))
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                self._send_json(404, {"success": False, "message": "ग्रुप/बैच नहीं मिला।"})
+                return
+            batch_name = row["name"]
+            cursor.execute("SELECT COUNT(*) FROM students WHERE batch_name = ?", (batch_name,))
+            student_count = cursor.fetchone()[0]
+            if student_count > 0:
+                conn.close()
+                self._send_json(400, {"success": False, "message": f"सुरक्षा अलर्ट: ग्रुप/बैच '{batch_name}' में अभी {student_count} छात्र नामांकित हैं! पहले उन्हें किसी अन्य बैच में ट्रांसफर करें या डिलीट करें।"})
+                return
+            cursor.execute("DELETE FROM batches WHERE id = ?", (batch_id,))
+            conn.commit()
+            conn.close()
+            self._send_json(200, {"success": True, "message": f"ग्रुप/बैच '{batch_name}' सफलतापूर्वक हटाया गया!"})
             return
 
         self._send_json(404, {"error": "Endpoint not found"})
