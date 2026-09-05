@@ -198,10 +198,11 @@ def sync_to_google_sheet(action_type, payload):
             data=json.dumps(data).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=15) as response:
             res_text = response.read().decode("utf-8")
             return True, res_text
     except Exception as e:
+        print(f"[Google Sheet Sync Error] {e}")
         return False, str(e)
 
 
