@@ -12,6 +12,7 @@ import os
 import urllib.parse
 import urllib.request
 import ssl
+import threading
 from datetime import datetime
 
 PORT = int(os.environ.get("PORT", 3000))
@@ -28,6 +29,7 @@ def init_db():
     """Initialize SQLite database with required tables and initial seed data."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
 
     # Settings table
     cursor.execute("""
@@ -223,7 +225,7 @@ def init_db():
     conn.close()
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -262,6 +264,11 @@ def sync_to_google_sheet(action_type, payload):
     except Exception as e:
         print(f"[Google Sheet Sync Error] {e}")
         return False, str(e)
+
+def sync_to_google_sheet_async(action_type, payload):
+    """Non-blocking background thread worker for syncing to Google Sheets without delaying client response."""
+    t = threading.Thread(target=sync_to_google_sheet, args=(action_type, payload), daemon=True)
+    t.start()
 
 
 class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -606,8 +613,8 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
             student = dict(cursor.fetchone())
             conn.close()
 
-            # Auto sync to Google sheet if configured
-            sync_to_google_sheet("student_attendance", {
+            # Auto sync to Google sheet if configured (non-blocking)
+            sync_to_google_sheet_async("student_attendance", {
                 "date": target_date,
                 "student_id": student["id"],
                 "student_name": student["name"],
@@ -668,7 +675,8 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
                         } for s in students_list
                     ]
                 }
-                sync_to_google_sheet("batch_student_attendance", batch_payload)
+                if batch_payload["records"]:
+                    sync_to_google_sheet_async("batch_student_attendance", batch_payload)
 
             self._send_json(200, {"success": True, "count": len(students_list), "date": target_date})
             return
@@ -755,7 +763,8 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
                     } for r in records
                 ]
             }
-            sync_to_google_sheet("batch_student_attendance", batch_payload)
+            # Sync absent marks to Google Sheets
+            sync_to_google_sheet_async("batch_student_attendance", batch_payload)
 
             self._send_json(200, {
                 "success": True,
@@ -836,7 +845,8 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
             teacher = dict(cursor.fetchone())
             conn.close()
 
-            sync_to_google_sheet("teacher_attendance", {
+            # Auto sync to Google sheet
+            sync_to_google_sheet_async("teacher_attendance", {
                 "date": target_date,
                 "teacher_id": teacher["id"],
                 "teacher_name": teacher["name"],
@@ -871,7 +881,7 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
                 new_id = cursor.lastrowid
                 conn.close()
 
-                sync_to_google_sheet("add_student", {
+                sync_to_google_sheet_async("add_student", {
                     "id": new_id, "name": name, "roll_no": roll_no,
                     "class": class_name, "batch": batch_name,
                     "parent_name": parent_name, "phone": phone_number
@@ -903,7 +913,7 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
             new_id = cursor.lastrowid
             conn.close()
 
-            sync_to_google_sheet("add_teacher", {
+            sync_to_google_sheet_async("add_teacher", {
                 "id": new_id, "name": name, "subject": subject, "phone": phone_number
             })
 
@@ -1161,10 +1171,13 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
         self._send_json(404, {"error": "Endpoint not found"})
 
 
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
 def run():
     init_db()
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), AttendanceRequestHandler) as httpd:
+    with ThreadedTCPServer(("", PORT), AttendanceRequestHandler) as httpd:
         print(f"================================================================")
         print(f"🚀 GSEC Attendance System Server is RUNNING at:")
         print(f"   Local URL:    http://localhost:{PORT}")
