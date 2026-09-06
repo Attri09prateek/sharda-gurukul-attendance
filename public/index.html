@@ -875,6 +875,56 @@
     </div>
   </div>
 
+  <!-- MODAL 6: Edit Student Dialog -->
+  <div id="editStudentModal" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>✏️ विद्यार्थी विवरण बदलें (Edit Student Details)</h3>
+        <button class="modal-close" id="closeEditStudentModal">&times;</button>
+      </div>
+      <form id="editStudentForm">
+        <input type="hidden" id="editStudentId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>विद्यार्थी का नाम (Student Name):</label>
+            <input type="text" id="editStudentName" class="form-control" placeholder="उदा. दक्ष कुमार" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>रोल नंबर (Roll Number):</label>
+              <input type="text" id="editStudentRoll" class="form-control" placeholder="उदा. 1, 2, SK-601" required>
+            </div>
+            <div class="form-group">
+              <label>कक्षा (Class):</label>
+              <select id="editStudentClass" class="form-control" required>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>बैच (Competitive Exam Batch):</label>
+            <select id="editStudentBatch" class="form-control" required>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label>माता / पिता का नाम (Parent Name):</label>
+            <input type="text" id="editStudentParent" class="form-control" placeholder="उदा. श्री राजेश शर्मा या (Not Provided)" required>
+          </div>
+          <div class="form-group">
+            <label>अभिभावक का WhatsApp मोबाइल नंबर:</label>
+            <input type="tel" id="editStudentPhone" class="form-control" placeholder="उदा. 9817350860" pattern="[0-9]{10}" required>
+            <small class="form-hint" style="color: #94a3b8; display: block; margin-top: 4px;">10 अंकों का मोबाइल नंबर डालें (बिना 0 या +91 के)</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelEditStudentBtn">रद्द करें</button>
+          <button type="submit" class="btn btn-primary">💾 बदलाव सुरक्षित करें</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 

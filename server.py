@@ -1197,6 +1197,39 @@ class AttendanceRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(400, {"success": False, "message": f"Sync failed: {msg}"})
             return
 
+        # Update student
+        if path == "/api/students/update":
+            student_id = data.get("id")
+            name = data.get("name", "").strip()
+            roll_no = data.get("roll_no", "").strip()
+            class_name = data.get("class_name", "").strip()
+            batch_name = data.get("batch_name", "").strip()
+            parent_name = data.get("parent_name", "").strip()
+            phone_number = data.get("phone_number", "").strip()
+
+            if not (student_id and name and roll_no and class_name and batch_name and phone_number):
+                self._send_json(400, {"success": False, "message": "Required fields are missing"})
+                return
+
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("""
+            UPDATE students
+            SET name = ?, roll_no = ?, class_name = ?, batch_name = ?, parent_name = ?, phone_number = ?
+            WHERE id = ?
+            """, (name, roll_no, class_name, batch_name, parent_name or "(Not Provided)", phone_number, student_id))
+            conn.commit()
+            conn.close()
+
+            sync_to_google_sheet_async("update_student", {
+                "id": student_id, "name": name, "roll_no": roll_no,
+                "class": class_name, "batch": batch_name,
+                "parent_name": parent_name or "(Not Provided)", "phone": phone_number
+            })
+
+            self._send_json(200, {"success": True, "message": "Student details updated successfully"})
+            return
+
         # Delete student
         if path == "/api/students/delete":
             student_id = data.get("id")

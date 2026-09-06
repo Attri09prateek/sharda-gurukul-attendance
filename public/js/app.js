@@ -234,7 +234,19 @@ const elements = {
   editBatchForm: document.getElementById('editBatchForm'),
   editBatchId: document.getElementById('editBatchId'),
   editBatchNameInput: document.getElementById('editBatchNameInput'),
-  editBatchIconSelect: document.getElementById('editBatchIconSelect')
+  editBatchIconSelect: document.getElementById('editBatchIconSelect'),
+
+  editStudentModal: document.getElementById('editStudentModal'),
+  closeEditStudentModal: document.getElementById('closeEditStudentModal'),
+  cancelEditStudentBtn: document.getElementById('cancelEditStudentBtn'),
+  editStudentForm: document.getElementById('editStudentForm'),
+  editStudentId: document.getElementById('editStudentId'),
+  editStudentName: document.getElementById('editStudentName'),
+  editStudentRoll: document.getElementById('editStudentRoll'),
+  editStudentClass: document.getElementById('editStudentClass'),
+  editStudentBatch: document.getElementById('editStudentBatch'),
+  editStudentParent: document.getElementById('editStudentParent'),
+  editStudentPhone: document.getElementById('editStudentPhone')
 };
 
 // Initialize Application
@@ -1204,7 +1216,8 @@ function renderAdminStudents() {
       <td>${s.batch_name}</td>
       <td>${s.parent_name}</td>
       <td>${s.phone_number}</td>
-      <td>
+      <td style="white-space: nowrap;">
+        <button class="btn-edit" onclick="openEditStudentModal(${s.id})">✏️ Edit</button>
         <button class="btn-delete" onclick="deleteStudent(${s.id})">Delete</button>
       </td>
     `;
@@ -1239,6 +1252,43 @@ window.deleteStudent = async function(id) {
       await loadStudentAttendance();
     }
   }
+};
+
+window.openEditStudentModal = function(id) {
+  const s = state.students.find(item => item.id === id);
+  if (!s) return;
+
+  if (elements.editStudentId) elements.editStudentId.value = s.id;
+  if (elements.editStudentName) elements.editStudentName.value = s.name || '';
+  if (elements.editStudentRoll) elements.editStudentRoll.value = s.roll_no || '';
+  if (elements.editStudentParent) elements.editStudentParent.value = s.parent_name || '';
+  if (elements.editStudentPhone) elements.editStudentPhone.value = s.phone_number || '';
+
+  // Populate Classes dropdown
+  if (elements.editStudentClass) {
+    elements.editStudentClass.innerHTML = '';
+    state.classes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = c.name;
+      if (c.name === s.class_name) opt.selected = true;
+      elements.editStudentClass.appendChild(opt);
+    });
+  }
+
+  // Populate Batches dropdown
+  if (elements.editStudentBatch) {
+    elements.editStudentBatch.innerHTML = '';
+    state.batches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.name;
+      opt.textContent = `${b.icon || '🎯'} ${b.name}`;
+      if (b.name === s.batch_name) opt.selected = true;
+      elements.editStudentBatch.appendChild(opt);
+    });
+  }
+
+  if (elements.editStudentModal) elements.editStudentModal.classList.remove('hidden');
 };
 
 window.deleteTeacher = async function(id) {
@@ -1457,6 +1507,52 @@ if (elements.closeEditBatchModal) {
 if (elements.cancelEditBatchBtn) {
   elements.cancelEditBatchBtn.addEventListener('click', () => {
     elements.editBatchModal.classList.add('hidden');
+  });
+}
+
+// Edit Student Modal Listeners
+if (elements.closeEditStudentModal) {
+  elements.closeEditStudentModal.addEventListener('click', () => {
+    elements.editStudentModal.classList.add('hidden');
+  });
+}
+if (elements.cancelEditStudentBtn) {
+  elements.cancelEditStudentBtn.addEventListener('click', () => {
+    elements.editStudentModal.classList.add('hidden');
+  });
+}
+if (elements.editStudentForm) {
+  elements.editStudentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = parseInt(elements.editStudentId.value, 10);
+    const name = elements.editStudentName.value.trim();
+    const roll_no = elements.editStudentRoll.value.trim();
+    const class_name = elements.editStudentClass.value;
+    const batch_name = elements.editStudentBatch.value;
+    const parent_name = elements.editStudentParent.value.trim() || '(Not Provided)';
+    const phone_number = elements.editStudentPhone.value.trim();
+
+    if (!name || !roll_no || !class_name || !batch_name || !phone_number) {
+      showToast('कृपया सभी आवश्यक जानकारी भरें', 'error');
+      return;
+    }
+
+    try {
+      const res = await api.post('/api/students/update', {
+        id, name, roll_no, class_name, batch_name, parent_name, phone_number
+      });
+
+      if (res.success) {
+        showToast('विद्यार्थी विवरण सफलतापूर्वक अपडेट किया गया (Student updated)', 'success');
+        elements.editStudentModal.classList.add('hidden');
+        await loadStudents();
+        await loadStudentAttendance();
+      } else {
+        showToast(res.message || 'त्रुटि (Error updating student)', 'error');
+      }
+    } catch (err) {
+      showToast('सर्वर एरर (Server Error)', 'error');
+    }
   });
 }
 
@@ -2258,6 +2354,16 @@ async function handleClientPost(url, data) {
       status: data.status
     });
     return { success: true, teacher, status: data.status, date: targetDate };
+  }
+  if (url.includes('/api/students/update')) {
+    let students = getLocalStore('students', DEFAULT_SEED_STUDENTS);
+    const idx = students.findIndex(s => s.id === data.id);
+    if (idx !== -1) {
+      students[idx] = { ...students[idx], ...data };
+      setLocalStore('students', students);
+      syncDirectGoogleSheet('update_student', data);
+    }
+    return { success: true };
   }
   if (url.includes('/api/students/delete')) {
     let students = getLocalStore('students', DEFAULT_SEED_STUDENTS);
