@@ -2070,17 +2070,32 @@ function setLocalStore(key, val) {
 }
 
 const DEFAULT_SEED_STUDENTS = [
-  { id: 1, name: "Aarav Sharma", roll_no: "SK-601", class_name: "6th", batch_name: "Sainik School", parent_name: "Rajesh Sharma", phone_number: "9817350860" },
-  { id: 2, name: "Vivaan Singh", roll_no: "SK-602", class_name: "6th", batch_name: "Sainik School", parent_name: "Vikram Singh", phone_number: "9812345678" },
-  { id: 3, name: "Aditya Verma", roll_no: "SK-603", class_name: "6th", batch_name: "Sainik School", parent_name: "Sanjay Verma", phone_number: "9876543210" },
-  { id: 4, name: "Reyansh Gupta", roll_no: "RMS-601", class_name: "6th", batch_name: "RMS", parent_name: "Praveen Gupta", phone_number: "9817350860" },
-  { id: 5, name: "Krishna Yadav", roll_no: "RMS-602", class_name: "6th", batch_name: "RMS", parent_name: "Mukesh Yadav", phone_number: "9898765432" },
-  { id: 6, name: "Kabir Chauhan", roll_no: "RC-601", class_name: "6th", batch_name: "RIMC", parent_name: "Dhirendra Chauhan", phone_number: "9817350860" },
-  { id: 7, name: "Arjun Rawat", roll_no: "RC-602", class_name: "6th", batch_name: "RIMC", parent_name: "Kuldeep Rawat", phone_number: "9765432109" },
-  { id: 8, name: "Rohan Malik", roll_no: "SK-701", class_name: "7th", batch_name: "Sainik School", parent_name: "Anil Malik", phone_number: "9817350860" },
-  { id: 9, name: "Shaurya Shekhawat", roll_no: "RC-801", class_name: "8th", batch_name: "RIMC", parent_name: "Bhawani Singh", phone_number: "9817350860" },
-  { id: 10, name: "Aniket Dahiya", roll_no: "SK-501", class_name: "5th", batch_name: "Sainik School", parent_name: "Virender Dahiya", phone_number: "9817350860" },
-  { id: 11, name: "Daksh Tanwar", roll_no: "SK-401", class_name: "4th", batch_name: "Sainik School", parent_name: "Deepak Tanwar", phone_number: "9817350860" }
+  { id: 1, name: "Lavya", roll_no: "6", class_name: "4th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "8307721856" },
+  { id: 2, name: "Manvita", roll_no: "8", class_name: "4th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "7056473106" },
+  { id: 3, name: "Nidhi", roll_no: "9", class_name: "4th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "9466661180" },
+  { id: 4, name: "Harshit", roll_no: "16", class_name: "4th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "9991913880" },
+  { id: 5, name: "Angel", roll_no: "1", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "7056473106" },
+  { id: 6, name: "Tushar", roll_no: "2", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "9267947993" },
+  { id: 7, name: "Anshika", roll_no: "3", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "7988811803" },
+  { id: 8, name: "Aniket", roll_no: "4", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "9817180660" },
+  { id: 9, name: "Manveer", roll_no: "5", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "7015046950" },
+  { id: 10, name: "Tanvi", roll_no: "11", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "7357346301" },
+  { id: 11, name: "Vijay", roll_no: "12", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "9467062048" },
+  { id: 12, name: "Prince", roll_no: "14", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "9671571705" },
+  { id: 13, name: "Vansh", roll_no: "15", class_name: "5th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "7206350921" },
+  { id: 14, name: "Pakhi", roll_no: "7", class_name: "6th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "8168021402" },
+  { id: 15, name: "Sarishti", roll_no: "10", class_name: "6th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "8307721856" },
+  { id: 16, name: "Yashika", roll_no: "13", class_name: "6th", batch_name: "Competition Junior", parent_name: "(Not Provided)", phone_number: "8930382948" },
+  { id: 17, name: "Sidharth", roll_no: "19", class_name: "7th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "8168151253" },
+  { id: 18, name: "Harsh Sharma", roll_no: "23", class_name: "7th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "9729194966" },
+  { id: 19, name: "moksh", roll_no: "26", class_name: "7th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "9996700557" },
+  { id: 20, name: "Khushi", roll_no: "17", class_name: "8th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "8053024141" },
+  { id: 21, name: "Barkha", roll_no: "18", class_name: "8th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "9350236441" },
+  { id: 22, name: "Yash Attri", roll_no: "20", class_name: "8th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "8168151253" },
+  { id: 23, name: "Manit", roll_no: "21", class_name: "8th", batch_name: "Competition Senior", parent_name: "Parmita", phone_number: "8295950371" },
+  { id: 24, name: "Rohit", roll_no: "22", class_name: "8th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "8307235594" },
+  { id: 25, name: "Ansh", roll_no: "24", class_name: "8th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "9728068232" },
+  { id: 26, name: "Gourav", roll_no: "25", class_name: "8th", batch_name: "Competition Senior", parent_name: "(Not Provided)", phone_number: "9729338038" }
 ];
 
 const DEFAULT_SEED_TEACHERS = [

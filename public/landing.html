@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sharda Gurukul - AI Voice Calling Gateway | ElevenLabs & Exotel</title>
+  <meta name="description" content="Sharda Gurukul AI Voice Calling Gateway powered by ElevenLabs Conversational AI Agent and Exotel Telephony. Dial any mobile number or call parents and students with a single click.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rozha+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/voice.css">
+</head>
+<body class="voice-body">
+
+  <div class="ambient-glow"></div>
+
+  <!-- App Header & Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="brand-logo">🏫</div>
+        <div>
+          <h1 class="brand-title">SHARDA GURUKUL • AI VOICE CALLING GATEWAY</h1>
+          <p class="brand-subtitle">Sainik School • RMS • RIMC • Navodaya — ElevenLabs AI Agent & Exotel</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="index.html" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 700;">
+          <span>📋</span> Attendance Portal ↗
+        </a>
+
+        <a href="https://shardagurukul.in" target="_blank" rel="noopener" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;">
+          <span>🌐</span> ShardaGurukul.in
+        </a>
+
+        <button type="button" id="btnOpenSettings" class="btn btn-secondary" title="Telephony Settings">
+          <span>⚙️</span> Telephony Config
+        </button>
+
+        <div class="live-clock-badge" id="telephonyStatusPill">
+          <span class="pulse-dot"></span> ElevenLabs Voice Agent Ready
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="voice-container">
+
+    <!-- Hero Section -->
+    <section class="voice-hero">
+      <div class="hero-pill-badge">
+        <span class="pulse-dot"></span>
+        <span>ELEVENLABS AGENT: <code>agent_4801m1txzxdjfdg885f57m5qzf4c</code></span>
+      </div>
+
+      <h2 class="voice-hero-title">
+        स्मार्ट <span class="gold-gradient">AI वॉयस कॉलिंग</span> पोर्टल
+      </h2>
+
+      <p class="voice-hero-subtitle">
+        कोई भी मोबाइल नंबर दर्ज करें और बटन दबाते ही <strong>Exotel</strong> के माध्यम से कॉल जाएगी तथा हमारा <strong>ElevenLabs AI Voice Agent</strong> सामने वाले व्यक्ति से बातचीत करेगा।
+      </p>
+
+      <div class="hero-features-row">
+        <span class="feature-tag"><span>⚡</span> तुरंत कॉल कनेक्ट (Instant Dialing)</span>
+        <span class="feature-tag"><span>🇮🇳</span> भारतीय नंबर (+91) सपोर्ट</span>
+        <span class="feature-tag"><span>🎙️</span> नेचुरल हिंदी/अंग्रेजी AI आवाज</span>
+        <span class="feature-tag"><span>👨‍👦</span> अभिभावक व छात्र डायरेक्ट डायलिंग</span>
+      </div>
+    </section>
+
+    <!-- Main Grid: Dialer + In-Browser Agent Preview -->
+    <div class="voice-main-grid">
+
+      <!-- LEFT: Interactive Phone Dialer & Active Call View -->
+      <div class="voice-card">
+        
+        <div class="card-header-flex">
+          <div class="card-title-group">
+            <div class="card-icon-avatar">📞</div>
+            <div>
+              <h3 class="card-title">वॉयस कॉलर इंटरफेस (Voice Caller)</h3>
+              <p class="card-subtitle">नंबर दर्ज करें या मौजूदा विद्यार्थियों की सूची से चुनें</p>
+            </div>
+          </div>
+
+          <div style="font-size: 0.78rem; color: #fbbf24; background: rgba(245, 158, 11, 0.1); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(245, 158, 11, 0.3);">
+            Exotel Telephony
+          </div>
+        </div>
+
+        <!-- Mode Selector Tabs -->
+        <div class="dialer-tabs">
+          <button type="button" class="dialer-tab-btn active" id="tabManualDial">
+            <span>🔢</span> त्वरित कॉल (Quick Call)
+          </button>
+          <button type="button" class="dialer-tab-btn" id="tabNewLead">
+            <span>📝</span> नई लीड व क्वेरी (New Inquiry)
+          </button>
+          <button type="button" class="dialer-tab-btn" id="tabContacts">
+            <span>👥</span> छात्र डायरेक्टरी (Roster)
+          </button>
+        </div>
+
+        <!-- VIEW 1: Manual Dial Mode -->
+        <div id="viewManualDial">
+
+          <!-- Phone Number Input Group -->
+          <div class="phone-input-container">
+            <div class="country-code-pill">
+              <span>🇮🇳</span>
+              <span>+91</span>
+            </div>
+            <input 
+              type="tel" 
+              id="phoneInput" 
+              class="main-phone-input" 
+              placeholder="10 अंकों का मोबाइल नंबर" 
+              maxlength="10" 
+              inputmode="numeric" 
+              autofocus
+            >
+            <button type="button" id="btnClearPhone" class="btn-clear-input" title="Clear Number">✕</button>
+          </div>
+
+          <!-- Recipient Name Match Indicator -->
+          <div id="recipientPreview" class="recipient-preview-banner" style="display: none;"></div>
+
+          <!-- Touch Number Pad -->
+          <div class="touch-keypad" id="touchKeypad">
+            <button type="button" class="keypad-button" data-key="1">1<span class="keypad-sub"></span></button>
+            <button type="button" class="keypad-button" data-key="2">2<span class="keypad-sub">ABC</span></button>
+            <button type="button" class="keypad-button" data-key="3">3<span class="keypad-sub">DEF</span></button>
+            <button type="button" class="keypad-button" data-key="4">4<span class="keypad-sub">GHI</span></button>
+            <button type="button" class="keypad-button" data-key="5">5<span class="keypad-sub">JKL</span></button>
+            <button type="button" class="keypad-button" data-key="6">6<span class="keypad-sub">MNO</span></button>
+            <button type="button" class="keypad-button" data-key="7">7<span class="keypad-sub">PQRS</span></button>
+            <button type="button" class="keypad-button" data-key="8">8<span class="keypad-sub">TUV</span></button>
+            <button type="button" class="keypad-button" data-key="9">9<span class="keypad-sub">WXYZ</span></button>
+            <button type="button" class="keypad-button keypad-action" data-key="clear">C<span class="keypad-sub">CLEAR</span></button>
+            <button type="button" class="keypad-button" data-key="0">0<span class="keypad-sub">+</span></button>
+            <button type="button" class="keypad-button keypad-action" data-key="backspace">⌫<span class="keypad-sub">DELETE</span></button>
+          </div>
+
+          <!-- Big Trigger Call Button -->
+          <button type="button" id="btnTriggerCall" class="btn-trigger-call" disabled style="opacity: 0.6;">
+            <span>📞</span>
+            <span>ENTER MOBILE NUMBER & CALL / फोन मिलाएं</span>
+          </button>
+
+        </div>
+
+        <!-- VIEW 2: New Lead & Query Form -->
+        <div id="viewNewLead" style="display: none;">
+          <form id="leadInquiryForm">
+            <div class="leads-form-grid">
+              <div>
+                <label style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">👤 छात्र / अभिभावक का नाम (Name)</label>
+                <input type="text" id="leadName" class="leads-input-field" placeholder="e.g. राजेश शर्मा (Aarav's Parent)">
+              </div>
+              <div>
+                <label style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">📱 मोबाइल नंबर (Mobile No.) *</label>
+                <input type="tel" id="leadPhone" class="leads-input-field" placeholder="10 अंकों का मोबाइल नंबर" maxlength="10" required>
+              </div>
+            </div>
+
+            <div class="leads-form-grid">
+              <div>
+                <label style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">🎯 कोर्स / प्रवेश बैच (Course Interest)</label>
+                <select id="leadCourse" class="leads-select-field">
+                  <option value="Sainik School Entrance (Class 6 & 9)">🪖 सैनिक स्कूल (Sainik School Class 6 & 9)</option>
+                  <option value="Rashtriya Military School (RMS)">🎖️ राष्ट्रीय मिलिट्री स्कूल (RMS)</option>
+                  <option value="RIMC Dehradun">⚔️ RIMC देहरादून (RIMC Dehradun)</option>
+                  <option value="Navodaya Vidyalaya (JNVST)">🏫 नवोदय विद्यालय (Navodaya Vidyalaya)</option>
+                  <option value="Foundation Batch (4th to 8th)">📚 फाउंडेशन बैच (4th to 8th)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">⏰ पसंदीदा फॉलो-अप समय (Follow-Up Time)</label>
+                <input type="text" id="leadFollowUp" class="leads-input-field" placeholder="e.g. आज शाम 5:00 PM या कल सुबह" value="आज शाम 05:00 PM">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+              <label style="font-size: 0.8rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 4px;">📝 क्वेरी / पूछताछ विवरण (Query Details)</label>
+              <textarea id="leadQuery" class="leads-textarea-field" placeholder="एडमिशन फीस, हॉस्टल सुविधा, सिलेबस या प्रवेश परीक्षा की जानकारी..."></textarea>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 8px 12px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; border: 1px dashed rgba(245, 158, 11, 0.3);">
+              <input type="checkbox" id="leadTriggerCall" style="accent-color: #f59e0b; width: 16px; height: 16px;">
+              <label for="leadTriggerCall" style="font-size: 0.84rem; color: #fbbf24; cursor: pointer;">
+                🎙️ <strong>तुरंत AI Voice Agent से भी कॉल लगाएं</strong> (Auto-dial with ElevenLabs Agent)
+              </label>
+            </div>
+
+            <button type="submit" class="btn-trigger-call">
+              <span>💬</span>
+              <span>लीड सहेजें और WhatsApp (9817350860) पर भेजें ↗</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- VIEW 3: Contacts Quick Dial Mode -->
+        <div id="viewContacts" style="display: none;">
+          <div class="contacts-search-box">
+            <span>🔍</span>
+            <input type="text" id="contactsSearchInput" class="contacts-search-input" placeholder="नाम, रोल नंबर या मोबाइल नंबर से खोजें...">
+          </div>
+
+          <div class="contacts-list-scroll" id="contactsList">
+            <div style="text-align: center; padding: 20px; color: #94a3b8;">
+              संपर्क सूची लोड हो रही है...
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Call in Progress Card (Displayed when calling) -->
+        <div id="activeCallCard" class="call-active-card" style="display: none;">
+          <div class="call-avatar-pulse">
+            🎙️
+          </div>
+
+          <div class="call-active-number" id="activeNumber">+91 98173 50860</div>
+          <div class="call-active-recipient" id="activeRecipient">Calling User / Student Parent</div>
+          
+          <div class="call-status-pill" id="callStatusBadge">
+            <span>🔔</span> Exotel डायल किया जा रहा है...
+          </div>
+
+          <!-- Animated Voice Frequency Bars -->
+          <div class="audio-waveform-bars">
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+          </div>
+
+          <div style="font-size: 1.3rem; font-weight: 800; font-family: monospace; color: #fff; margin-bottom: 18px;" id="callTimer">
+            00:00
+          </div>
+
+          <button type="button" id="btnHangupCall" class="btn-hangup-call">
+            <span>📴</span> कॉल समाप्त करें (End Call)
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: ElevenLabs Direct Browser Voice Widget & Academy Voice Info -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+
+        <!-- Browser Web Call Preview Widget -->
+        <div class="web-agent-preview-card">
+          <div class="web-agent-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 26px;">🤖</span>
+              <div>
+                <h4 style="margin: 0; font-size: 1.05rem; color: #fff;">लाइव AI वॉयस बातचीत (Web Voice)</h4>
+                <p style="margin: 2px 0 0; font-size: 0.76rem; color: #94a3b8;">सीधे इसी ब्राउज़र में माइक्रोफ़ोन द्वारा बात करें</p>
+              </div>
+            </div>
+            <span class="web-agent-badge">ElevenLabs AI</span>
+          </div>
+
+          <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 16px;">
+            फोन कॉल के साथ-साथ आप नीचे दिए गए आधिकारिक ElevenLabs विजेट के जरिए सीधे अपने कंप्यूटर या मोबाइल ब्राउज़र के माइक्रोफ़ोन से भी एजेंट से बात कर सकते हैं:
+          </p>
+
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(59, 130, 246, 0.4); border-radius: 12px; padding: 18px; text-align: center;">
+            <div style="margin-bottom: 12px; font-size: 0.82rem; color: #fbbf24;">
+              🎙️ ElevenLabs Official Conversational AI Widget:
+            </div>
+            <!-- Embedded Official ElevenLabs Widget for agent_4801m1txzxdjfdg885f57m5qzf4c -->
+            <elevenlabs-convai agent-id="agent_4801m1txzxdjfdg885f57m5qzf4c"></elevenlabs-convai>
+          </div>
+        </div>
+
+        <!-- WhatsApp Quick Notification Info Box -->
+        <div class="voice-card" style="padding: 20px;">
+          <h4 style="font-size: 0.98rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span>📲</span> WhatsApp इंटीग्रेशन (WhatsApp Alert):
+          </h4>
+
+          <p style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px;">
+            नई क्वेरी या एडमिशन पूछताछ दर्ज होते ही सीधे अधिकृत WhatsApp नंबर <strong>9817350860</strong> पर छात्र का नाम, मोबाइल नंबर, कोर्स व फॉलो-अप समय का पूरा ब्योरा स्वतः तैयार होकर भेजा जाता है।
+          </p>
+
+          <div style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: #86efac; display: flex; align-items: center; justify-content: space-between;">
+            <span>अधिकृत WhatsApp नंबर: <strong>+91 9817350860</strong></span>
+            <a href="https://wa.me/919817350860" target="_blank" rel="noopener" class="btn-whatsapp-lead" style="padding: 4px 8px; font-size: 0.72rem;">
+              चैट खोलें ↗
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Leads & Follow-up Queue Section -->
+    <section class="voice-card logs-card" style="margin-top: 28px;">
+      <div class="card-header-flex">
+        <div class="card-title-group">
+          <div class="card-icon-avatar" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3);">
+            📋
+          </div>
+          <div>
+            <h3 class="card-title">प्राप्त पूछताछ व फॉलो-अप सूची (Leads & Follow-Up Queue)</h3>
+            <p class="card-subtitle">वेबसाइट ও AI एजेंट द्वारा प्राप्त सभी नई लीड्स और WhatsApp अलर्ट</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="btnRefreshLeads" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;">
+            <span>🔄</span> रीफ़्रेश
+          </button>
+          <button type="button" id="btnClearLeads" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; color: #f87171;">
+            <span>🗑️</span> साफ़ करें
+          </button>
+        </div>
+      </div>
+
+      <!-- Lead Stats Bar -->
+      <div class="lead-stats-bar" id="leadStatsBar">
+        <div class="lead-stat-chip">
+          <span>कुल लीड्स (Total):</span> <b id="statTotalLeads">0</b>
+        </div>
+        <div class="lead-stat-chip">
+          <span>आज की क्वेरी (Today):</span> <b id="statTodayLeads" style="color: #fbbf24;">0</b>
+        </div>
+        <div class="lead-stat-chip">
+          <span>WhatsApp अलर्ट (Alerts):</span> <b id="statWaAlerts" style="color: #34d399;">0</b>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="voice-logs-table">
+          <thead>
+            <tr>
+              <th>नाम व मोबाइल (Lead)</th>
+              <th>कोर्स / बैच (Interest)</th>
+              <th>फॉलो-अप समय (Follow-Up)</th>
+              <th>क्वेरी विवरण (Notes)</th>
+              <th>स्थिति (Status)</th>
+              <th>तारीख</th>
+              <th>एक्शन (WhatsApp & Call)</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">
+                लीड्स डेटा लोड हो रहा है...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Recent Call Logs Section -->
+    <section class="voice-card logs-card" style="margin-top: 24px;">
+      <div class="card-header-flex">
+        <div class="card-title-group">
+          <div class="card-icon-avatar" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3);">
+            📜
+          </div>
+          <div>
+            <h3 class="card-title">आउटबाउंड कॉल हिस्ट्री (Recent Call Logs)</h3>
+            <p class="card-subtitle">कॉल की गई सभी संपर्कों का विवरण व वर्तमान स्थिति</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="btnRefreshLogs" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;">
+            <span>🔄</span> रीफ़्रेश
+          </button>
+          <button type="button" id="btnClearLogs" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; color: #f87171;">
+            <span>🗑️</span> साफ़ करें
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="voice-logs-table">
+          <thead>
+            <tr>
+              <th>मोबाइल नंबर / प्राप्तकर्ता</th>
+              <th>क्लास व बैच</th>
+              <th>स्थिति (Status)</th>
+              <th>कॉल ID (SID)</th>
+              <th>समय (Timestamp)</th>
+              <th>एक्शन</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody">
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">
+                कॉल लॉग्स लोड हो रहे हैं...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Lead Submitted WhatsApp Alert Modal -->
+  <div id="leadSuccessModal" class="voice-modal-backdrop" style="display: none;">
+    <div class="voice-modal-card" style="max-width: 500px; text-align: center;">
+      <div style="font-size: 44px; margin-bottom: 12px;">✅</div>
+      <h3 style="color: #fff; margin-bottom: 8px;">नई पूछताछ सफलतापूर्वक दर्ज की गई!</h3>
+      <p style="font-size: 0.85rem; color: #94a3b8; line-height: 1.5; margin-bottom: 16px;">
+        लीड का विवरण Sharda Gurukul डेटाबेस में सुरक्षित हो गया है। नीचे दिए गए बटन से सीधे WhatsApp (9817350860) पर विवरण भेजें:
+      </p>
+
+      <div id="leadWaPreviewBox" style="background: #0b1120; border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; text-align: left; font-size: 0.82rem; color: #cbd5e1; white-space: pre-wrap; max-height: 180px; overflow-y: auto; margin-bottom: 18px;">
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" onclick="document.getElementById('leadSuccessModal').style.display='none'" class="btn btn-secondary">
+          बंद करें
+        </button>
+        <a id="btnModalOpenWa" href="#" target="_blank" rel="noopener" class="btn-whatsapp-lead" style="padding: 10px 18px; font-size: 0.95rem;">
+          📲 WhatsApp (9817350860) पर भेजें
+        </a>
+      </div>
+    </div>
+  </div>
+  <div id="settingsModal" class="voice-modal-backdrop" style="display: none;">
+    <div class="voice-modal-card">
+      <div class="voice-modal-header">
+        <h3 style="margin: 0; font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span> ElevenLabs & Exotel Telephony Settings
+        </h3>
+        <button type="button" id="btnCloseSettings" class="btn-close-modal">✕</button>
+      </div>
+
+      <form id="settingsForm">
+        <div class="form-group-voice">
+          <label for="cfgAgentId">ElevenLabs Agent ID</label>
+          <input type="text" id="cfgAgentId" value="agent_4801m1txzxdjfdg885f57m5qzf4c" required>
+          <span class="form-hint-voice">ElevenLabs Conversational AI Agent identifier.</span>
+        </div>
+
+        <div class="form-group-voice">
+          <label for="cfgApiKey">ElevenLabs API Key (xi-api-key)</label>
+          <input type="password" id="cfgApiKey" placeholder="sk_••••••••••••••••••••••••">
+          <span class="form-hint-voice">ElevenLabs API secret key from your ElevenLabs Profile.</span>
+        </div>
+
+        <div class="form-group-voice">
+          <label for="cfgPhoneNumId">Exotel Phone Number ID (From ElevenLabs)</label>
+          <input type="text" id="cfgPhoneNumId" placeholder="phn_... or Exotel Number ID">
+          <span class="form-hint-voice">The Phone Number ID displayed in ElevenLabs Telephony tab for your imported Exotel number.</span>
+        </div>
+
+        <div class="form-group-voice">
+          <label for="cfgAdminPin">Admin PIN (सुरक्षा पिन)</label>
+          <input type="password" id="cfgAdminPin" placeholder="Default: 9817" maxlength="4">
+          <span class="form-hint-voice">Chairperson / Admin PIN to authorize configuration changes.</span>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" onclick="document.getElementById('settingsModal').style.display='none'" class="btn btn-secondary">
+            रद्द करें
+          </button>
+          <button type="submit" class="btn btn-primary" style="background: var(--gold-primary, #f59e0b); color: #000; font-weight: 700;">
+            💾 सेटिंग्स सहेजें (Save Config)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ElevenLabs Official Conversational AI Widget Script -->
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+  <!-- Client-side Controller -->
+  <script src="js/voice.js"></script>
+</body>
+</html>
